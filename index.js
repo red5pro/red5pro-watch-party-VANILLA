@@ -194,7 +194,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
       clearTimeout(t);
     }, 2000); 
-    // a bit of a hack. had to put a timeout to ensure the video track bits at least started flowing :/
   }
 
   function showVideoPoster () {
@@ -228,10 +227,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isPublishing = true;
     window.red5propublisher = publisher;
     console.log('[Red5ProPublisher] Publish Complete.');
-    // [NOTE] Moving SO setup until Package Sent amount is sufficient.
     //    establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() !== 'RTC') {
-      // It's flash, let it go.
       establishSocketHost(publisher, roomField.value, streamNameField.value);
     }
     try {
@@ -245,7 +242,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       });
     }
     catch (e) {
-      // no tracking for you!
     }
   }
   function onUnpublishFail (message) {
