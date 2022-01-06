@@ -5,12 +5,15 @@
     <!--{{> meta title='Conference'}}
     {{> header-scripts}}
     {{> header-stylesheets}}-->
-    <title>Conference</title>
-    <link rel="stylesheet" href="static/conference.css">
-    <script src="static/subscription-status.js"></script>
+    <title>Watch Party</title>
     <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script>
-    <script src="static/red5pro-utils.js"></script>
-    <script src="static/reachability.js"></script>
+    <script src="static/script/testbed-config.js"></script>
+    <script src="static/script/red5pro-utils.js"></script>
+    <script src="static/script/reachability.js"></script>
+    <link rel="stylesheet" href="static/css/reset.css">
+    <link rel="stylesheet" href="static/css/testbed.css">
+    <link rel="stylesheet" href="static/css/conference.css">
+    <script src="static/script/subscription-status.js"></script>
   </head>
   <body>
     <script src="https://unpkg.com/red5pro-html-sdk@latest/red5pro-sdk.min.js"></script>
@@ -19,6 +22,7 @@
     <div id="app">
       <!--{{> settings-link}}
       {{> test-title title='Conference'}}-->
+      <h1 class="centered test-title red-text">Watch Party</h1>
       <div class="conference-section">
         <div id="publisher-container" class="publisher-section publisher-container">
           <div class="settings-area">
