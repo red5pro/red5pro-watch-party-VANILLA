@@ -35,7 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/script/publisher-status.js"></script>
   </head>
   <body>
-    <script src="https://unpkg.com/red5pro-html-sdk@latest/red5pro-sdk.min.js"></script>
+    <script src="https://unpkg.com/red5pro-webrtc-sdk@latest/red5pro-sdk.min.js"></script>
     <!--{{> top-bar }}
     {{> navigation isTestPage=true }}-->
     <div id="app">
@@ -103,6 +103,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
       </div>
     </div>
     <!--{{> body-scripts}}-->
+    <script src="static/lib/es6/es6-promise.min.js"></script>
+    <script src="static/lib/es6/es6-bind.js"></script>
+    <script src="static/lib/es6/es6-array.js"></script>
+    <script src="static/lib/es6/es6-object-assign.js"></script>
+    <script src="static/lib/es6/es6-fetch.js"></script>
+
     <script src="conference-subscriber.js"></script>
     <script src="device-selector-util.js"></script>
     <script src="index.js"></script>
