@@ -29,18 +29,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/script/reachability.js"></script>
     <link rel="stylesheet" href="static/css/reset.css">
     <link rel="stylesheet" href="static/css/testbed.css">
-    <link rel="stylesheet" href="static/lib/red5pro-media.css">
+    <link rel="stylesheet" href="static/lib/red5pro/red5pro-media.css">
     <link rel="stylesheet" href="static/css/conference.css">
-    <script src="static/script/subscription-status.js"></script>
-    <script src="static/script/publisher-status.js"></script>
   </head>
   <body>
     <script src="https://unpkg.com/red5pro-webrtc-sdk@latest/red5pro-sdk.min.js"></script>
     <!--{{> top-bar }}
     {{> navigation isTestPage=true }}-->
     <div id="app">
-      <!--{{> settings-link}}
-      {{> test-title title='Conference'}}-->
+      <!--{{> settings-link}}-->
       <h1 class="centered test-title red-text">Watch Party</h1>
       <div class="conference-section">
         <div id="publisher-container" class="publisher-section publisher-container">
@@ -52,6 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
           </div>
           <div id="publisher-session" class="publisher-session hidden">
             {{> status-field-publisher}}
+            <p id="status-field"></p>
           {{> statistics-field packets_field='Packets Sent'}}
           </div>
           <div class="centered video-holder">
@@ -109,6 +107,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/lib/es6/es6-object-assign.js"></script>
     <script src="static/lib/es6/es6-fetch.js"></script>
 
+    <script src="static/script/subscription-status.js"></script>
+    <script src="static/script/publisher-status.js"></script>
     <script src="conference-subscriber.js"></script>
     <script src="device-selector-util.js"></script>
     <script src="index.js"></script>
