@@ -39,11 +39,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   
     var build_version = '$VERSION';
-    //var protocol = window.location.protocol;
+    var protocol = window.location.protocol;
     var port = window.location.port;
-    //protocol = protocol.substring(0, protocol.lastIndexOf(':'));
-    var protocol = 'https';
-  
+    protocol = protocol.substring(0, protocol.lastIndexOf(':'));
+    
     var isMoz = !!navigator.mozGetUserMedia;
     var isEdge = window.navigator.userAgent.indexOf('Edge') > -1;
     var isiPod = !!navigator.platform && /iPod/.test(navigator.platform);
@@ -55,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       "hlsport": 5080,
       "hlssport": 443,
       "wsport": 5080,
-      "wssport": 8443,
+      "wssport": 443,
       "rtmpport": 1935,
       "rtmpsport": 1936
     };
