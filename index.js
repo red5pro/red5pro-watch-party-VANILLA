@@ -57,8 +57,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
-  var socketEndpoint = window.query('socket') || 'localhost:8001'
-
+  var socketEndpoint = window.query('socket') || 'localhost';
+  
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
   var publisherContainer = document.getElementById('publisher-container');
@@ -118,7 +118,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var protocol = serverSettings.protocol;
   var isSecure = protocol == 'https';
-
+  
   function saveSettings () {
     streamName = streamNameField.value;
     roomName = roomField.value;
@@ -297,6 +297,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
+    alert('here');
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
     var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`

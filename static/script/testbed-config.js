@@ -39,9 +39,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   
     var build_version = '$VERSION';
-    var protocol = window.location.protocol;
+    //var protocol = window.location.protocol;
     var port = window.location.port;
-    protocol = protocol.substring(0, protocol.lastIndexOf(':'));
+    //protocol = protocol.substring(0, protocol.lastIndexOf(':'));
+    var protocol = 'https';
   
     var isMoz = !!navigator.mozGetUserMedia;
     var isEdge = window.navigator.userAgent.indexOf('Edge') > -1;
@@ -54,14 +55,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       "hlsport": 5080,
       "hlssport": 443,
       "wsport": 5080,
-      "wssport": 443,
+      "wssport": 8443,
       "rtmpport": 1935,
       "rtmpsport": 1936
     };
     function assignStorage () {
       json = {
         "version": build_version,
-        "host": window.location.hostname,
+        "host": 'demo-live.red5.net',
         "port": 5080,
         "stream1": "stream1",
         "stream2": "stream2",
