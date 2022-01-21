@@ -227,7 +227,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isPublishing = true;
     window.red5propublisher = publisher;
     console.log('[Red5ProPublisher] Publish Complete.');
-    //    establishSharedObject(publisher, roomField.value, streamNameField.value);
+    //establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() !== 'RTC') {
       establishSocketHost(publisher, roomField.value, streamNameField.value);
     }
@@ -297,7 +297,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
-    alert('here');
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
     var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
