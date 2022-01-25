@@ -72,6 +72,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     width: 320px;
     height: 240px;
   }
+  .main-video-holder {
+    width: 640px;
+    height: 480px;
+    background-color: #000;
+  }
   /*
   .video-holder {
     background:url(../../css/assets/red5pro_logo.png) no-repeat center center;
