@@ -287,13 +287,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   // eslint-disable-next-line no-unused-vars
   function updatePublishingUIOnStreamCount (streamCount) {
-    /*
-    if (streamCount > 0) {
+    /*if (streamCount > 0) {
       publisherContainer.classList.remove('margin-center');
     } else {
       publisherContainer.classList.add('margin-center');
-    }
-    */
+    }*/
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
@@ -310,6 +308,39 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         processStreams(streamsList, streamName);
       }
     }
+  }
+
+  function createMainVideo () {
+    var mainVideo = new red5prosdk.RTCSubscriber();
+    mainVideo.init({
+      protocol: 'wss',
+      port: 443,
+      host: 'demo-live.red5.net',
+      app: 'live',
+      streamName: 'demo-stream',
+      rtcConfiguration: {
+        iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
+        iceCandidatePoolSize: 2,
+        bundlePolicy: 'max-bundle'
+      }, // See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#RTCConfiguration_dictionary
+      mediaElementId: 'red5pro-mainVideoView',
+      subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16),
+      videoEncoding: 'NONE',
+      audioEncoding: 'NONE',
+    })
+    .then(function(mainVideo) {
+      return mainVideo.subscribe();
+    })
+    .then(function(mainVideo) {
+      // subscription is complete.
+      // playback should begin immediately due to
+      //   declaration of `autoplay` on the `video` element.
+    })
+    .catch(function(error) {
+      // A fault occurred while trying to initialize and playback the stream.
+      console.error(error)
+    });
+  
   }
 
   function determinePublisher () {
@@ -388,6 +419,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     .then(function (publisherImpl) {
       targetPublisher = publisherImpl;
       targetPublisher.on('*', onPublisherEvent);
+      createMainVideo();
       return targetPublisher.preview();
     })
     .catch(function (error) {
@@ -445,6 +477,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
 
     updatePublishingUIOnStreamCount(nonPublishers.length);
+
   }
 
 })(this, document, window.red5prosdk);
