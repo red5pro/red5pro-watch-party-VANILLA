@@ -35,10 +35,43 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
   </head>
   <body>
     <script src="https://unpkg.com/red5pro-webrtc-sdk@latest/red5pro-sdk.min.js"></script>
-    <!--{{> top-bar }}
-    {{> navigation isTestPage=true }}-->
     <div id="app">
-      <!--{{> settings-link}}-->
+      <h1 class="centered test-title red-text">Watch Party</h1>
+     <div class="main">
+      <div class="program-container">
+        <div class="program">
+          <video id="red5pro-mainVideoView"
+          controls autoplay playsinline muted
+          width=100% height=100%>
+       </video>
+        </div>
+        <div class="side-viewers">
+          <div class="viewer">Viewer 6</div>
+          <div class="viewer">Viewer 7</div>
+          <div class="viewer">Viewer 8</div>  
+        </div>
+      </div>
+      <div class="bottom-viewers">
+        <div class="viewer">Viewer 1</div>
+        <div class="viewer">Viewer 2</div>
+        <div class="viewer">Viewer 3</div>
+        <div class="viewer">Viewer 4</div>
+        <div class="viewer">Viewer 5</div>
+      </div>
+      <div class="centered status-field hidden">
+        <p>
+          <input type="text" id="input-field" />
+          <button id="send-button">send</button>
+        </p>
+        <hr>
+        <p>
+          <textarea id="so-field" disabled style="width: 50%; min-height: 240px; min-width: 320px"></textarea>
+        </p>
+      </div>
+    </div>
+
+    <!--
+    <div id="app">
       <h1 class="centered test-title red-text">Watch Party</h1>
       <video id="red5pro-mainVideoView"
            class="centered"
@@ -54,9 +87,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
             </p>
           </div>
           <div id="publisher-session" class="publisher-session hidden">
-            <!--{{> status-field-publisher}}-->
             <p id="status-field"></p>
-          <!--{{> statistics-field packets_field='Packets Sent'}}-->
           <p id="statistics-field" class="centered status-field statistics-field hidden">
             Bitrate: <span id="bitrate-field" class="bitrate-field">N/A</span>.&nbsp;
             Packets Sent: <span id="packets-field" class="packets-field">N/A</span>.
@@ -112,6 +143,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
         </p>
       </div>
     </div>
+  -->
+
+
     <!--{{> body-scripts}}-->
     <script src="static/lib/es6/es6-promise.min.js"></script>
     <script src="static/lib/es6/es6-bind.js"></script>
