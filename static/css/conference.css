@@ -19,6 +19,161 @@ WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+.main {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  lefT: 0;
+}
+
+.program-container {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 3;
+}
+
+.program {
+  width: calc(100vw - (100vw / 5));
+  text-align: center;
+}
+
+.side-viewers {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  justify-content: space-around;
+  height: 100%;
+}
+
+.bottom-viewers {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.viewer {
+  flex-grow: 1;
+  text-align: center;
+  border: 1px solid black;
+  max-width: calc(100vw / 5);
+}
+
+.subscribers {
+  display: flex;
+  flex-direction: row;
+  flex-flow: wrap;
+  justify-content: center;
+}
+
+.publisher-name-field, .subscriber-name-field {
+  text-align: center;
+  background-color: #3580A2;
+  color: #fff;
+}
+  
+.publisher-mute-notice {
+  text-align: center;
+}
+
+.publisher-mute-controls {
+  text-align: center;
+  border-top: 1px solid #dbdbdb;
+}
+
+.publisher-mute-controls, .publisher-name-field, .subscriber-name-field {
+  padding: 20px 10px!important;
+}
+
+.subscriber-id-field {
+  padding: 20px 10px;
+  background-color: #dbdbdb;
+}
+
+.auto-margined {
+  margin: 1em auto;
+}
+.float-left {
+  float: left;
+}
+.spaced {
+  margin: 1em;
+}
+.video-holder {
+  width: 320px;
+  height: 240px;
+}
+.publisher-container, .subscriber-container {
+  width: 320px;
+  background-color: #3b3b3b;
+}
+.subscriber-container {
+  margin: 10px;
+}
+.publisher-session {
+  width: 100%;
+}
+.publisher-settings {
+  width: 100%;
+  background-color: #eee;
+}
+.publisher-settings > p {
+  padding: 10px;
+}
+.dark-background {
+  background-color: #3b3b3b;
+}
+.status-field-gray {
+  padding: 0.4rem 0;
+  background-color: #999;
+  border-top: 1px solid #3b3b3b;
+}
+.hidden {
+  display: none;
+}
+.device-label {
+  width: 40%;
+  text-align: right;
+  display: inline-block;
+}
+.device-control {
+  max-width: 140px;
+}
+.device-info {
+  font-size: 0.7em;
+}
+.publisher-section {
+  max-width: 320px;
+}
+.margin-center {
+  margin: 0 auto;
+}
+.settings-area {
+  background-color: #eeee;
+  padding: 10px;
+}
+.settings-label {
+  width: auto;
+}
+.settings-input {
+  font-size: 1em;
+  height: 1.5rem;
+  padding-left: 0.8rem;
+  max-width: 142px;
+}
+.info-title {
+  padding: 20px 0;
+}
+.paddedHR {
+  margin: 0!important;
+}
+.hidden {
+  display: auto;
+}
+  /*
 .conference-section {
     width: 100%;
     display: flex;
@@ -27,126 +182,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     align-items: baseline;
     flex-flow: wrap;
   }
-  
-  .subscribers {
-    display: flex;
-    flex-direction: row;
-    flex-flow: wrap;
-    justify-content: center;
-  }
-  
-  .publisher-name-field, .subscriber-name-field {
-    text-align: center;
-    background-color: #3580A2;
-    color: #fff;
-  }
-  
-  .publisher-mute-notice {
-    text-align: center;
-  }
-  
-  .publisher-mute-controls {
-    text-align: center;
-    border-top: 1px solid #dbdbdb;
-  }
-  
-  .publisher-mute-controls, .publisher-name-field, .subscriber-name-field {
-    padding: 20px 10px!important;
-  }
-  
-  .subscriber-id-field {
-    padding: 20px 10px;
-    background-color: #dbdbdb;
-  }
-  
-  .auto-margined {
-    margin: 1em auto;
-  }
-  .float-left {
-    float: left;
-  }
-  .spaced {
-    margin: 1em;
-  }
-  .video-holder {
-    width: 320px;
-    height: 240px;
-  }
-  .main-video-holder {
-    width: 640px;
-    height: 480px;
-    background-color: #000;
-  }
-  /*
-  .video-holder {
-    background:url(../../css/assets/red5pro_logo.png) no-repeat center center;
-    background-size: contain;
-  }
   */
-  .publisher-container, .subscriber-container {
-    width: 320px;
-    background-color: #3b3b3b;
-  }
-  .subscriber-container {
-    margin: 10px;
-  }
-  .publisher-session {
-    width: 100%;
-  }
-  .publisher-settings {
-    width: 100%;
-    background-color: #eee;
-  }
-  .publisher-settings > p {
-    padding: 10px;
-  }
-  .dark-background {
-    background-color: #3b3b3b;
-  }
-  .status-field-gray {
-    padding: 0.4rem 0;
-    background-color: #999;
-    border-top: 1px solid #3b3b3b;
-  }
-  .hidden {
-    display: none;
-  }
-  .device-label {
-    width: 40%;
-    text-align: right;
-    display: inline-block;
-  }
-  .device-control {
-    max-width: 140px;
-  }
-  .device-info {
-    font-size: 0.7em;
-  }
-  .publisher-section {
-    max-width: 320px;
-  }
-  .margin-center {
-    margin: 0 auto;
-  }
-  .settings-area {
-    background-color: #eeee;
-    padding: 10px;
-  }
-  .settings-label {
-    width: auto;
-  }
-  .settings-input {
-    font-size: 1em;
-    height: 1.5rem;
-    padding-left: 0.8rem;
-    max-width: 142px;
-  }
-  .info-title {
-    padding: 20px 0;
-  }
-  .paddedHR {
-    margin: 0!important;
-  }
-  .hidden {
-    display: auto;
-  }
