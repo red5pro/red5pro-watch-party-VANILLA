@@ -200,12 +200,12 @@ html {
     margin: 1rem;
   }
   
-  .settings-label {
+  /*.settings-label {
     width: 45%;
     display: inline-block;
     margin-right: 1rem;
     text-align: right;
-  }
+  }*/
   
   .settings-field > input {
     height: 1.5rem;
