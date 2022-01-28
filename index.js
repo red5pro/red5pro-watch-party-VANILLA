@@ -460,7 +460,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     });
     var i, length = subscribers.length - 1;
     var sub;
-    for(i = 0; i < 8; i++) {
+    for(i = 0; i < 8; i++) { //used to be i<length
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
