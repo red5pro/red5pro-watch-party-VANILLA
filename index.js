@@ -227,6 +227,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isPublishing = true;
     window.red5propublisher = publisher;
     console.log('[Red5ProPublisher] Publish Complete.');
+    //here remove hidden main video 
     //establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() !== 'RTC') {
       establishSocketHost(publisher, roomField.value, streamNameField.value);
@@ -306,6 +307,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       if (roomName === payload.room) {
         streamsList = payload.streams
         processStreams(streamsList, streamName);
+        //processSideStreams(streamsList, streamName);
       }
     }
   }
@@ -420,6 +422,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       targetPublisher = publisherImpl;
       targetPublisher.on('*', onPublisherEvent);
       createMainVideo();
+      //remove hidden from main video.. maybe add that into "createmain"
       return targetPublisher.preview();
     })
     .catch(function (error) {
@@ -448,8 +451,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var streamsList = [];
   //var subscribersEl = document.getElementById('subscribers');
   //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
-  for(j = 2; j < 9; j++){ //tab everything below over 1 tab
-  var subscribersEl = document.getElementById('viewer' + j);//maybe could hve the prcoess streams function twice, and half go by elemdnt id bottom viewer vs half by side viewer?
+  //for(j = 2; j < 9; j++){ //tab everything below over 1 tab
+  var subscribersEl = document.getElementById('bottomViewers');//maybe could hve the prcoess streams function twice, and half go by elemdnt id bottom viewer vs half by side viewer?
   function processStreams (streamlist, exclusion) {
     var nonPublishers = streamlist.filter(function (name) {
       return name !== exclusion;
@@ -461,9 +464,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var subscribers = list.map(function (name, index) {
       return new window.ConferenceSubscriberItem(name, subscribersEl, index);
     });
-    var i, length = subscribers.length - 1;
+    var i = subscribers.length - 1;
+    var length = subscribers.length - 1;;
     var sub;
-    for(i = 0; i < length; i++) { //maybe switch to i<8 to restrict no of publishers? 
+    //for(i = 0; i < length; i++) { //maybe switch to i<8 to restrict no of publishers? 
+    for(i = 0; i < length; i++) {
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
@@ -476,13 +481,48 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                                   },
                                   getAuthenticationParams(),
                                   getUserMediaConfiguration());
+                                  //mediaElementId: elementId,
       subscribers[0].execute(baseSubscriberConfig);
     }
 
     updatePublishingUIOnStreamCount(nonPublishers.length);
-
+    
   }
-}
+
+  /*var sideSubscribersEl = document.getElementById('sideViewers');
+  function processSideStreams (streamlist, exclusion) {
+    var nonPublishers = streamlist.filter(function (name) {
+      return name !== exclusion;
+    });
+    var list = nonPublishers.filter(function (name, index, self) {
+      return (index == self.indexOf(name)) &&
+        !document.getElementById(window.getConferenceSubscriberElementId(name));
+    });
+    var subscribers = list.map(function (name, index) {
+      return new window.ConferenceSubscriberItem(name, sideSubscribersEl, index);
+    });
+    var i, length = subscribers.length - 1;
+    var sub;
+    for(i = 4; i < 8; i++) { //maybe switch to i<8 to restrict no of publishers? 
+      sub = subscribers[i];
+      sub.next = subscribers[sub.index+1];
+    }
+    if (subscribers.length > 0) {
+      var baseSubscriberConfig = Object.assign({},
+                                  configuration,
+                                  {
+                                    protocol: getSocketLocationFromProtocol().protocol,
+                                    port: getSocketLocationFromProtocol().port
+                                  },
+                                  getAuthenticationParams(),
+                                  getUserMediaConfiguration());
+                                  //mediaElementId: elementId,
+      subscribers[0].execute(baseSubscriberConfig);
+    }
+
+    updatePublishingUIOnStreamCount(nonPublishers.length);
+    
+  }*/
 
 })(this, document, window.red5prosdk);
 
