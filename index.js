@@ -446,7 +446,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.addEventListener('pagehide', shutdown);
 
   var streamsList = [];
-  var subscribersEl = document.getElementById('subscribers');
+  //var subscribersEl = document.getElementById('subscribers');
+  //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
+  for(j = 2; j < 9; j++){ //tab everything below over 1 tab
+  var subscribersEl = document.getElementById('viewer' + j);//maybe could hve the prcoess streams function twice, and half go by elemdnt id bottom viewer vs half by side viewer?
   function processStreams (streamlist, exclusion) {
     var nonPublishers = streamlist.filter(function (name) {
       return name !== exclusion;
@@ -460,7 +463,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     });
     var i, length = subscribers.length - 1;
     var sub;
-    for(i = 0; i < 8; i++) { //used to be i<length
+    for(i = 0; i < length; i++) { //maybe switch to i<8 to restrict no of publishers? 
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
@@ -479,6 +482,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     updatePublishingUIOnStreamCount(nonPublishers.length);
 
   }
+}
 
 })(this, document, window.red5prosdk);
 
