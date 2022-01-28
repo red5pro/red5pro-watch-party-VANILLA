@@ -53,9 +53,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   flex-grow: 1;
   display: flex;
   flex-direction: row;
-  max-height: calc(100vh / 4);
-  /*flex-wrap: nowrap;*/
-  /*width: 100%;*/
+  /*max-height: calc(100vh / 4);*/
 }
 
 .viewer {
@@ -63,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   text-align: center;
   border: 1px solid black;
   max-width: calc(100vw / 5);
-  max-height: calc(100vh / 4);
+  /*max-height: calc(100vh / 4);*/
 }
 
 /*.subscribers {
