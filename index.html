@@ -53,13 +53,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
         </div>
         <div class="side-viewers">
           <div class="viewer">Viewer 6 Placeholder
-            <video id="subscriber-" + getSubscriberElementId(name)>
+            <video id="viewer6">
+              controls autoplay playsinline muted
             </video>
           </div>
-          <div class="viewer">
-            <div id="subscribers"></div>
+          <div class="viewer">Viewer 7 Placeholder
+            <video id="viewer7">
+              controls autoplay playsinline muted
+            </video>            
+            <!--<div id="subscribers" class="viewer"></div>-->
           </div>
-          <div class="viewer">Viewer 8</div>  
+          <div class="viewer">Viewer 8
+            <video id="viewer8">
+              controls autoplay playsinline muted
+            </video>
+          </div>  
         </div>
       </div>
       <div class="bottom-viewers">
@@ -101,9 +109,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
                 <label class="device-label" for="microphone-select">Microphone:</label>
                 <select class="control device-control settings-input" name="microphone-select" id="microphone-select"></select>
               </p>
-              <!--<p id="publisher-mute-notice" class="publisher-mute-notice remove-on-broadcast">
-                <span class="device-info">Video and Audio can be turned off after publish has started.</span>
-              </p>-->
               <p id="publisher-mute-controls" class="publisher-mute-controls hidden">
                 <label for="video-check">Video: </label>
                 <input type="checkbox" id="video-check" name="video-check" checked>
