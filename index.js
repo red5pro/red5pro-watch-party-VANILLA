@@ -74,6 +74,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var bitrateField = document.getElementById('bitrate-field');
   var packetsField = document.getElementById('packets-field');
   var resolutionField = document.getElementById('resolution-field');
+  var mainProgram = document.getElementById('red5pro-mainVideoView');
   var bitrateTrackingTicket;
   var bitrate = 0;
   var packetsSent = 0;
@@ -237,6 +238,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       var stream = publisher.getMediaStream();
       bitrateTrackingTicket = window.trackBitrate(pc, onBitrateUpdate, null, null, true);
       statisticsField.classList.remove('hidden');
+      mainProgram.classList.remove('hidden');
       stream.getVideoTracks().forEach(function (track) {
         var settings = track.getSettings();
         onResolutionUpdate(settings.width, settings.height);
