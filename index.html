@@ -36,23 +36,35 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
   <body>
     <script src="https://unpkg.com/red5pro-webrtc-sdk@latest/red5pro-sdk.min.js"></script>
     <div id="app">
-      <h1 class="centered test-title red-text">Watch Party</h1>
+      <!--<div class="settings-area">
+        <p>
+          <label for="room-field" class="settings-label remove-on-broadcast">Room:</label>
+          <input id="room-field" name="room-field" class="settings-input remove-on-broadcast">
+        </p>
+      </div>-->
+     <h1 class="centered test-title red-text">Watch Party</h1>
      <div class="main">
       <div class="program-container">
         <div class="program">
           <video id="red5pro-mainVideoView"
           controls autoplay playsinline muted
           width=100% height=100%>
-       </video>
+          </video>
         </div>
         <div class="side-viewers">
-          <div class="viewer">Viewer 6</div>
-          <div class="viewer">Viewer 7</div>
+          <div class="viewer">Viewer 6 Placeholder
+            <video id="subscriber-" + getSubscriberElementId(name)>
+            </video>
+          </div>
+          <div class="viewer">
+            <div id="subscribers"></div>
+          </div>
           <div class="viewer">Viewer 8</div>  
         </div>
       </div>
       <div class="bottom-viewers">
         <div class="viewer">
+        
           <div id="publisher-container" class="publisher-section publisher-container">
             <div class="settings-area">
               <p>
@@ -89,9 +101,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
                 <label class="device-label" for="microphone-select">Microphone:</label>
                 <select class="control device-control settings-input" name="microphone-select" id="microphone-select"></select>
               </p>
-              <p id="publisher-mute-notice" class="publisher-mute-notice remove-on-broadcast">
+              <!--<p id="publisher-mute-notice" class="publisher-mute-notice remove-on-broadcast">
                 <span class="device-info">Video and Audio can be turned off after publish has started.</span>
-              </p>
+              </p>-->
               <p id="publisher-mute-controls" class="publisher-mute-controls hidden">
                 <label for="video-check">Video: </label>
                 <input type="checkbox" id="video-check" name="video-check" checked>
@@ -104,7 +116,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
               </div>
             </div>
           </div>
-          <div id="subscribers" class="viewer"></div>
+          <!--<div id="subscribers" class="viewer"></div>-->
         </div>
         <div class="centered status-field hidden">
           <p>
@@ -115,7 +127,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
           <p>
             <textarea id="so-field" disabled style="width: 50%; min-height: 240px; min-width: 320px"></textarea>
           </p>
-        </div>          
+        </div>           
+
         </div>
         <div class="viewer">Viewer 2</div>
         <div class="viewer">Viewer 3</div>
