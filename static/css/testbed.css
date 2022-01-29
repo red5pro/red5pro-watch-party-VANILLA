@@ -141,6 +141,9 @@ html {
   .red5pro-publisher {
     width: 100%;
     background-color: #000;
+    flex-grow: 1;
+    text-align: center;
+    max-width: calc(100vw / 5);
   }
   
   .status-field {
