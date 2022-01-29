@@ -308,7 +308,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       var payload = JSON.parse(message.data)
       if (roomName === payload.room) {
         streamsList = payload.streams
-        processStreams(streamsList, streamName);
+        for (var i=0; i<4; i++) {
+          bottomStreamsList[i] = streamsList[i];
+        }
+        for (var i=4; i<7; i++) {
+          sideStreamsList.push(streamsList[i]); 
+        }
+        processStreams(bottomStreamsList, streamName); //might need to switch this baack to streamsList
         //processSideStreams(streamsList, streamName);
       }
     }
@@ -450,6 +456,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.addEventListener('pagehide', shutdown);
 
   var streamsList = [];
+  var bottomStreamsList = [];
+  var sideStreamsList = [];
   //var subscribersEl = document.getElementById('subscribers');
   //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
   //for(j = 2; j < 9; j++){ //tab everything below over 1 tab
@@ -466,8 +474,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var subscribers = list.map(function (name, index) {
       return new window.ConferenceSubscriberItem(name, bottomSubscribersEl, index);
     });
-    var i = subscribers.length - 1;
-    var length = subscribers.length - 1;
+    var i, length = subscribers.length - 1;
     var sub;
     for(i = 0; i < length; i++) {
       sub = subscribers[i];
@@ -486,41 +493,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
     
   }
-
-  /*var sideSubscribersEl = document.getElementById('sideViewers');
-  function processSideStreams (streamlist, exclusion) {
-    var nonPublishers = streamlist.filter(function (name) {
-      return name !== exclusion;
-    });
-    var list = nonPublishers.filter(function (name, index, self) {
-      return (index == self.indexOf(name)) &&
-        !document.getElementById(window.getConferenceSubscriberElementId(name));
-    });
-    var subscribers = list.map(function (name, index) {
-      return new window.ConferenceSubscriberItem(name, sideSubscribersEl, index);
-    });
-    var i, length = subscribers.length - 1;
-    var sub;
-    for(i = 4; i < 8; i++) { //maybe switch to i<8 to restrict no of publishers? 
-      sub = subscribers[i];
-      sub.next = subscribers[sub.index+1];
-    }
-    if (subscribers.length > 0) {
-      var baseSubscriberConfig = Object.assign({},
-                                  configuration,
-                                  {
-                                    protocol: getSocketLocationFromProtocol().protocol,
-                                    port: getSocketLocationFromProtocol().port
-                                  },
-                                  getAuthenticationParams(),
-                                  getUserMediaConfiguration());
-                                  //mediaElementId: elementId,
-      subscribers[0].execute(baseSubscriberConfig);
-    }
-
-    updatePublishingUIOnStreamCount(nonPublishers.length);
-    
-  }*/
 
 })(this, document, window.red5prosdk);
 
