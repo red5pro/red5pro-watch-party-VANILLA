@@ -58,6 +58,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   /*max-height: calc(100vh / 4);*/
 }
 
+.subscribers {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+
 .viewer {
   flex-grow: 1;
   text-align: center;
