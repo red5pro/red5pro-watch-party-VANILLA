@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   flex-direction: column-reverse;
   align-items: stretch; /* this may be removable */
-  justify-content: space-around; /* this may be removable */
+  /*justify-content: space-around;*/
   /*height: 100%;*/
 }
 
