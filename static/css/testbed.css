@@ -144,6 +144,7 @@ html {
     flex-grow: 1;
     text-align: center;
     max-width: calc(100vw / 5);
+    max-height: calc(100vh / 4);
   }
 
   .red5pro-subscriber {
