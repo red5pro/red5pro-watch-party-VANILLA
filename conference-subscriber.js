@@ -55,7 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function templateContent (templateHTML) {
     var div = document.createElement('div');
-    div.classList.add('subscriber-container');
+    //div.classList.add('subscriber-container');
     div.innerHTML = templateHTML;
     return div;
   }
