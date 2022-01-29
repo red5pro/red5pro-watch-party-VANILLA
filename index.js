@@ -82,7 +82,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var frameHeight = 0;
 
   function updateStatistics (b, p, w, h) {
-    statisticsField.classList.remove('hidden');
+    //statisticsField.classList.remove('hidden');
     bitrateField.innerText = b === 0 ? 'N/A' : Math.floor(b);
     packetsField.innerText = p;
     resolutionField.innerText = (w || 0) + 'x' + (h || 0);
@@ -237,7 +237,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       var pc = publisher.getPeerConnection();
       var stream = publisher.getMediaStream();
       bitrateTrackingTicket = window.trackBitrate(pc, onBitrateUpdate, null, null, true);
-      statisticsField.classList.remove('hidden');
+      //statisticsField.classList.remove('hidden');
       mainProgram.classList.remove('hidden');
       stream.getVideoTracks().forEach(function (track) {
         var settings = track.getSettings();
@@ -281,8 +281,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
-    publisherNameField.classList.remove('hidden');
-    publisherMuteControls.classList.remove('hidden');
+    //publisherNameField.classList.remove('hidden');
+    //publisherMuteControls.classList.remove('hidden');
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
