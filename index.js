@@ -280,7 +280,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function setPublishingUI (streamName) {
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
-    publisherSession.classList.remove('hidden');
+    //publisherSession.classList.remove('hidden');
     //publisherNameField.classList.remove('hidden');
     //publisherMuteControls.classList.remove('hidden');
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
