@@ -63,6 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   flex-direction: row;
   max-width: calc(100vw - (100vw / 5));
+  max-height: calc(100vh / 4);
 }
 
 .viewer {
