@@ -72,6 +72,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     return ['red5pro', 'subscriber', streamName, 'audio'].join('-');
   }
 
+  function removeLoadingIcon (container) {
+    var icon = container.querySelector('.loading-icon');
+    if (icon) {
+      icon.parentNode.removeChild(icon)
+    }
+  }
+
+  function addLoadingIcon (container) {
+    var icon = container.querySelector('.loading-icon');
+    if (!icon) {
+      var loadingIcon = document.createElement('img');
+      loadingIcon.src = 'static/images/loading.svg';
+      loadingIcon.classList.add('stream-play-button');
+      loadingIcon.classList.add('loading-icon');
+      container.appendChild(loadingIcon);
+    }
+  }
+
   function generateNewSubscriberDOM (streamName, subId, parent) {
     var card = templateContent(subscriberTemplate);
     parent.appendChild(card);
@@ -86,6 +104,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     videoElement.id = videoId;
     audioElement.id = audioId;
     card.id = getSubscriberElementContainerId(streamName);
+    card.style.position = 'relative'
     return card;
   }
 
@@ -139,6 +158,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.toggleVideoPoster = this.toggleVideoPoster.bind(this);
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
+
+    addLoadingIcon(this.card)
   }
   SubscriberItem.prototype.handleAudioDecoyVolumeChange = function (event) {
     if (this.audioDecoy) {
@@ -176,18 +197,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
   SubscriberItem.prototype.resolve = function () {
+    removeLoadingIcon(this.card)
     if (this.next) {
-      console.log('TEST', '[subscriber:' + name + '] next ->.')
+      console.log('TEST', new Date().getTime(), '[subscriber:' + name + '] next ->.')
       this.next.execute(this.baseConfiguration);
     }
   }
   SubscriberItem.prototype.reject = function (event) {
     console.error(event);
+    removeLoadingIcon(this.card)
     if (this.next) {
       this.next.execute(this.baseConfiguration);
     }
   }
   SubscriberItem.prototype.execute = function (config) {
+    addLoadingIcon(this.card)
+
     this.baseConfiguration = config;
     var self = this;
     var name = this.streamName;

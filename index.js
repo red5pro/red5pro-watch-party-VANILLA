@@ -492,10 +492,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       return new window.ConferenceSubscriberItem(name, parent, index);
     });
 
-    if (streamlist.length >= bottomRowLimit) {
+    if (nonPublishers.length >= bottomRowLimit) {
       bottomSubscribersEl.classList.add('subscribers-full')
+      document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.add('red5pro-subscriber-full'))
     } else {
       bottomSubscribersEl.classList.remove('subscribers-full')
+      document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.remove('red5pro-subscriber-full'))
     }
 
     var i, length = subscribers.length - 1;
