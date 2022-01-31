@@ -118,8 +118,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
-  var isSecure = protocol == 'https';
-  
+  var isSecure = true; //protocol == 'https';
+
   function saveSettings () {
     streamName = streamNameField.value;
     roomName = roomField.value;
@@ -218,7 +218,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
       window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
     }
-    updateStatusFromEvent(event);
+    // updateStatusFromEvent(event);
   }
   function onPublishFail (message) {
     isPublishing = false;
@@ -308,14 +308,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       var payload = JSON.parse(message.data)
       if (roomName === payload.room) {
         streamsList = payload.streams
-        for (var i=0; i<4; i++) {
-          bottomStreamsList[i] = streamsList[i];
-        }
-        for (var i=4; i<7; i++) {
-          sideStreamsList.push(streamsList[i]); 
-        }
-        processBottomStreams(bottomStreamsList, streamName); //might need to switch this baack to streamsList
-        processSideStreams(sideStreamsList, streamName);
+        processStreams(streamsList, streamName);
       }
     }
   }
@@ -456,54 +449,49 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.addEventListener('pagehide', shutdown);
 
   var streamsList = [];
-  var bottomStreamsList = [];
-  var sideStreamsList = [];
+  const bottomRowLimit = 4;
   //var subscribersEl = document.getElementById('subscribers');
   //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
   //for(j = 2; j < 9; j++){ //tab everything below over 1 tab
   var bottomSubscribersEl = document.getElementById('bottomViewers');
   var sideSubscribersEl = document.getElementById('sideViewers');
-  function processBottomStreams (streamlist, exclusion) {
-    var nonPublishers = streamlist.filter(function (name) {
-      return name !== exclusion;
-    });
-    var list = nonPublishers.filter(function (name, index, self) {
-      return (index == self.indexOf(name)) &&
-        !document.getElementById(window.getConferenceSubscriberElementId(name));
-    });
-    var subscribers = list.map(function (name, index) {
-      return new window.ConferenceSubscriberItem(name, bottomSubscribersEl, index);
-    });
-    var i, length = subscribers.length - 1;
-    var sub;
-    for(i = 0; i < length; i++) {
-      sub = subscribers[i];
-      sub.next = subscribers[sub.index+1];
-    }
-    if (subscribers.length > 0) {
-      var baseSubscriberConfig = Object.assign({},
-                                  configuration,
-                                  {
-                                    protocol: getSocketLocationFromProtocol().protocol,
-                                    port: getSocketLocationFromProtocol().port
-                                  },
-                                  getAuthenticationParams(),
-                                  getUserMediaConfiguration());
-      subscribers[0].execute(baseSubscriberConfig);
-    }
+
+  function positionExisting (list) {
+    list.forEach((name, index) => {
+      const elementContainer = document.getElementById(window.getConferenceSubscriberElementContainerId(name))
+      if  (index < bottomRowLimit) {
+        if (elementContainer.parentNode && elementContainer.parentNode !== bottomSubscribersEl) {
+          elementContainer.parentNode.removeChild(elementContainer)
+          bottomSubscribersEl.appendChild(elementContainer)
+        }
+      } else {
+        if (elementContainer.parentNode && elementContainer.parentNode !== sideSubscribersEl) {
+          element.parentNode.removeChild(elementContainer)
+          sideSubscribersEl.appendChild(elementContainer)
+        }
+      }
+    })
   }
 
-  function processSideStreams (streamlist, exclusion) {
+  function processStreams (streamlist, exclusion) {
     var nonPublishers = streamlist.filter(function (name) {
       return name !== exclusion;
     });
-    var list = nonPublishers.filter(function (name, index, self) {
+    var existing = nonPublishers.filter((name, index, self) => {
+      return (index == self.indexOf(name)) && document.getElementById(window.getConferenceSubscriberElementId(name))
+    })
+    var toAdd = nonPublishers.filter(function (name, index, self) {
       return (index == self.indexOf(name)) &&
         !document.getElementById(window.getConferenceSubscriberElementId(name));
     });
-    var subscribers = list.map(function (name, index) {
-      return new window.ConferenceSubscriberItem(name, sideSubscribersEl, index);
+
+    positionExisting(existing)
+    let lastIndex = existing.length
+    var subscribers = toAdd.map(function (name, index) {
+      const parent = lastIndex++ < bottomRowLimit ? bottomSubscribersEl : sideSubscribersEl
+      return new window.ConferenceSubscriberItem(name, parent, index);
     });
+
     var i, length = subscribers.length - 1;
     var sub;
     for(i = 0; i < length; i++) {

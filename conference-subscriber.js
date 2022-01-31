@@ -64,6 +64,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     return ['red5pro', 'subscriber', streamName].join('-');
   }
 
+  function getSubscriberElementContainerId (streamName) {
+    return [getSubscriberElementId(streamName), 'container'].join('-')
+  }
+
   function getSubscriberAudioElementId (streamName) {
     return ['red5pro', 'subscriber', streamName, 'audio'].join('-');
   }
@@ -81,7 +85,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     subscriberIdField.innerText = '(' + subId + ')';
     videoElement.id = videoId;
     audioElement.id = audioId;
-    card.id = [videoId, 'container'].join('-');
+    card.id = getSubscriberElementContainerId(streamName);
     return card;
   }
 
@@ -210,6 +214,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         sub.off('*', respond);
         sub.off('Subscribe.Fail', fail);
       }
+      sub.off('Subscribe.Play.Unpublish', close);
       sub.off('Subscribe.Connection.Closed', close);
       sub.unsubscribe().then(cleanup).catch(cleanup);
       if (self.audioDecoy) {
@@ -239,6 +244,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
     };
 
+    this.subscriber.on('Subscribe.Play.Unpublish', close);
     this.subscriber.on('Subscribe.Connection.Closed', close);
     this.subscriber.on('Subscribe.Fail', fail);
     this.subscriber.on('*', respond);
@@ -254,6 +260,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       });
   }
 
+  window.getConferenceSubscriberElementContainerId = getSubscriberElementContainerId;
   window.getConferenceSubscriberElementId = getSubscriberElementId;
   window.ConferenceSubscriberItem = SubscriberItem;
 
