@@ -64,8 +64,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     return ['red5pro', 'subscriber', streamName].join('-');
   }
 
+  function getSubscriberElementContainerId (streamName) {
+    return [getSubscriberElementId(streamName), 'container'].join('-')
+  }
+
   function getSubscriberAudioElementId (streamName) {
     return ['red5pro', 'subscriber', streamName, 'audio'].join('-');
+  }
+
+  function removeLoadingIcon (container) {
+    var icon = container.querySelector('.loading-icon');
+    if (icon) {
+      icon.parentNode.removeChild(icon)
+    }
+  }
+
+  function addLoadingIcon (container) {
+    var icon = container.querySelector('.loading-icon');
+    if (!icon) {
+      var loadingIcon = document.createElement('img');
+      loadingIcon.src = 'static/images/loading.svg';
+      loadingIcon.classList.add('stream-play-button');
+      loadingIcon.classList.add('loading-icon');
+      container.appendChild(loadingIcon);
+    }
   }
 
   function generateNewSubscriberDOM (streamName, subId, parent) {
@@ -81,7 +103,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     subscriberIdField.innerText = '(' + subId + ')';
     videoElement.id = videoId;
     audioElement.id = audioId;
-    card.id = [videoId, 'container'].join('-');
+    card.id = getSubscriberElementContainerId(streamName);
+    card.style.position = 'relative'
     return card;
   }
 
@@ -135,6 +158,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.toggleVideoPoster = this.toggleVideoPoster.bind(this);
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
+
+    addLoadingIcon(this.card)
   }
   SubscriberItem.prototype.handleAudioDecoyVolumeChange = function (event) {
     if (this.audioDecoy) {
@@ -172,17 +197,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
   SubscriberItem.prototype.resolve = function () {
+    removeLoadingIcon(this.card)
     if (this.next) {
+      console.log('TEST', new Date().getTime(), '[subscriber:' + name + '] next ->.')
       this.next.execute(this.baseConfiguration);
     }
   }
   SubscriberItem.prototype.reject = function (event) {
     console.error(event);
+    removeLoadingIcon(this.card)
     if (this.next) {
       this.next.execute(this.baseConfiguration);
     }
   }
   SubscriberItem.prototype.execute = function (config) {
+    addLoadingIcon(this.card)
+
     this.baseConfiguration = config;
     var self = this;
     var name = this.streamName;
@@ -193,7 +223,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       mediaElementId: getSubscriberElementId(name)
                     });
     this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('Connect.Success', this.resolve.bind(this));
+    this.subscriber.on('Subscribe.Start', this.resolve.bind(this));
     this.subscriber.on('Connect.Failure', this.reject.bind(this));
     var sub = this.subscriber;
     var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
@@ -210,6 +240,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         sub.off('*', respond);
         sub.off('Subscribe.Fail', fail);
       }
+      sub.off('Subscribe.Play.Unpublish', close);
       sub.off('Subscribe.Connection.Closed', close);
       sub.unsubscribe().then(cleanup).catch(cleanup);
       if (self.audioDecoy) {
@@ -219,8 +250,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     };
     var fail = function (event) { // eslint-disable-line no-unused-vars
       close();
+      console.log('TEST', '[subscriber:' + name + '] fail.')
       var t = setTimeout(function () {
         clearTimeout(t);
+        console.log('TEST', '[subscriber:' + name + '] retry.')
         new SubscriberItem(self.streamName, self.parent, self.index).execute();
       }, 2000);
     };
@@ -239,6 +272,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
     };
 
+    this.subscriber.on('Subscribe.Play.Unpublish', close);
     this.subscriber.on('Subscribe.Connection.Closed', close);
     this.subscriber.on('Subscribe.Fail', fail);
     this.subscriber.on('*', respond);
@@ -254,6 +288,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       });
   }
 
+  window.getConferenceSubscriberElementContainerId = getSubscriberElementContainerId;
   window.getConferenceSubscriberElementId = getSubscriberElementId;
   window.ConferenceSubscriberItem = SubscriberItem;
 

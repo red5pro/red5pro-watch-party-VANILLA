@@ -62,15 +62,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   flex-grow: 1;
   display: flex;
   flex-direction: row;
-  max-width: calc(100vw - (100vw / 5));
   max-height: calc(100vh / 4);
+  background-color: black;
+}
+
+.subscribers-full {
+  justify-content: space-around;
 }
 
 .viewer {
   flex-grow: 1;
   text-align: center;
   max-width: calc(100vw / 5);
-  max-height: calc(100vh / 4);
+  height: calc(100vh / 4);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  background-color: black;
 }
 
 /*.subscribers {
@@ -194,3 +202,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     flex-flow: wrap;
   }
   */
+
+.red5pro-publisher {
+  max-width: calc(100vw / 5);
+  max-height: calc(100vh / 4);
+}
+
+.red5pro-subscriber {
+  width: calc(100vw / 5);
+  height: calc(100vh / 4);
+}
+
+.red5pro-subscriber-full {
+  width: unset;
+}
+
+.stream-play-button {
+  width: 50px;
+  height: 50px;
+  color: #fff;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
