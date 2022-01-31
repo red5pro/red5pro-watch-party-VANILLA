@@ -492,6 +492,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       return new window.ConferenceSubscriberItem(name, parent, index);
     });
 
+    if (streamlist.length >= bottomRowLimit) {
+      bottomSubscribersEl.classList.add('subscribers-full')
+    } else {
+      bottomSubscribersEl.classList.remove('subscribers-full')
+    }
+
     var i, length = subscribers.length - 1;
     var sub;
     for(i = 0; i < length; i++) {

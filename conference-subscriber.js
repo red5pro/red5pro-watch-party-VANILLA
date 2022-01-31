@@ -177,6 +177,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
   SubscriberItem.prototype.resolve = function () {
     if (this.next) {
+      console.log('TEST', '[subscriber:' + name + '] next ->.')
       this.next.execute(this.baseConfiguration);
     }
   }
@@ -197,7 +198,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       mediaElementId: getSubscriberElementId(name)
                     });
     this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('Connect.Success', this.resolve.bind(this));
+    this.subscriber.on('Subscribe.Start', this.resolve.bind(this));
     this.subscriber.on('Connect.Failure', this.reject.bind(this));
     var sub = this.subscriber;
     var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
@@ -224,8 +225,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     };
     var fail = function (event) { // eslint-disable-line no-unused-vars
       close();
+      console.log('TEST', '[subscriber:' + name + '] fail.')
       var t = setTimeout(function () {
         clearTimeout(t);
+        console.log('TEST', '[subscriber:' + name + '] retry.')
         new SubscriberItem(self.streamName, self.parent, self.index).execute();
       }, 2000);
     };

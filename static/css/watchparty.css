@@ -63,7 +63,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   flex-direction: row;
   max-height: calc(100vh / 4);
-  border: 1px solid red;
+  background-color: black;
+}
+
+.subscribers-full {
+  justify-content: space-around;
 }
 
 .viewer {
@@ -71,10 +75,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   text-align: center;
   max-width: calc(100vw / 5);
   height: calc(100vh / 4);
-  border: 1px solid red;
   display: flex;
   flex-direction: column-reverse;
   align-items: stretch;
+  background-color: black;
 }
 
 /*.subscribers {
