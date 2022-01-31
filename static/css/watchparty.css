@@ -229,3 +229,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   margin: auto;
 }
 
+#red5pro-mainVideoView {
+  background-color: #000;
+}
