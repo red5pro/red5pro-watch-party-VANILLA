@@ -210,7 +210,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 .red5pro-subscriber {
   width: calc(100vw / 5);
-  max-height: calc(100vh / 4);
+  height: calc(100vh / 4);
 }
 
 .red5pro-subscriber-full {
