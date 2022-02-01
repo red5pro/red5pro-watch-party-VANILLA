@@ -241,3 +241,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #red5pro-mainVideoView {
   background-color: #000;
 }
+
+.alert {
+  position: absolute;
+  z-index: 10001;
+  left: 50%;
+  top: 40px;
+  background-color: #eee;
+  text-align: center;
+  padding: 20px;
+  transform: translate(-50%, 0);
+}
+
+.alert-message {
+  width: 100%;
+  padding: 10px 0 20px 0;
+}
