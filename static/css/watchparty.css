@@ -19,6 +19,13 @@ WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+.debug {
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  color: white;
+}
+
 .main {
   display: flex;
   flex-direction: column;
@@ -229,3 +236,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   margin: auto;
 }
 
+#red5pro-mainVideoView {
+  background-color: #000;
+}
