@@ -87,7 +87,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var packetsOutTimeout = 0;
 
   function notifyOfPublishFailure () {
-    alert('There seems to be an issue with broadcasting your stream. Please reload this page and join again.')
+    const al = document.querySelector('.alert')
+    const msg = al.querySelector('.alert-message')
+    const submit = al.querySelector('#alert-submit')
+    msg.innerText = 'There seems to be an issue with broadcasting your stream. Please reload this page and join again.'
+    al.classList.remove('hidden')
+    submit.addEventListener('click', () => {
+      al.classList.add('hidden')
+    })
   }
 
   function startPublishTimeout () {
@@ -519,6 +526,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function relayout () {
     const nonPublishers = streamsList.filter(name => name !== streamName)
     positionExisting(nonPublishers)
+    //    sweep(streamsList, bottomSubscribersEl)
+    //    sweep(streamsList, sideSubscribersEl)
     if (bottomSubscribersEl.children.length >= bottomRowLimit) {
       bottomSubscribersEl.classList.add('subscribers-full')
       document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.add('red5pro-subscriber-full'))
@@ -526,6 +535,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       bottomSubscribersEl.classList.remove('subscribers-full')
       document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.remove('red5pro-subscriber-full'))
     }
+  }
+
+  function sweep (list, container) {
+    // Brute force cleanup.
+    const r = /red5pro-subscriber-(.*)-container/
+    const elements = Array.prototype.slice.call(container.children)
+    const errantNames = []
+    const errant = elements.filter(e => {
+      const result = r.exec(e.id)
+      if (result && result.length > 1) {
+        errantNames.push(result[1])
+        return list.indexOf(result[1]) === -1
+      }
+      return false
+    })
+    window.ConferenceSubscriberUtil.removeAll(errantNames)
+    errant.forEach(e => {
+      if (e.parentNode) {
+        try {
+          e.parentNode.removeChild(e)
+        } catch (e) {}
+      }
+    })
+    // console.log('ERRANT SWEEP', errantNames)
   }
 
   function processStreams (list, previousList, exclusion) {

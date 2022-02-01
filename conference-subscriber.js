@@ -169,10 +169,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     this.card.querySelector('.debug').innerText = this.streamName
 
-    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
+    //    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
     this.resetTimout = 0
     this.disposed = false
-    this.unexpectedClose = false
     ConferenceSubscriberItemMap[this.streamName] = this
 
     addLoadingIcon(this.card)
@@ -216,7 +215,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   SubscriberItem.prototype.respond = function (event) {
     if (event.type === 'Subscribe.Time.Update') return;
 
-    console.log('TEST', '[subscriber:' + name + '] ' + event.type);
+    console.log('TEST', '[subscriber:' + this.streamName + '] ' + event.type);
 
     var inFailedState = updateSuscriberStatusFromEvent(event, this.statusField);
     if (event.type === 'Subscribe.Metadata') {
@@ -224,20 +223,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         this.handleStreamingModeMetadata(event.data.streamingMode)
         this.toggleVideoPoster(!event.data.streamingMode.match(/Video/));
       }
+    } else if (event.type === 'Subscriber.Play.Unpublish') {
+      this.dispose()
     } else if (event.type === 'Subscribe.Connection.Closed') {
       this.close()
-    } else if (event.type === 'Subscriber.Play.Unpublish') {
-      this.unexpectedClose = false
-      this.close()
     } else if (event.type === 'Connect.Failure') {
-      this.unexpectedClose = true
       this.reject()
+      this.close()
+    } else if (event.type === 'Subscribe.Fail') {
+      this.reject()
+      this.close()
     } else if (event.type === 'Subscribe.Start') {
       this.resolve()
-    } else if (event.type === 'Subscribe.Fail') {
-      this.unexpectedClose = true
-      this.reject()
-      this.close()
     }
 
     if (inFailedState) {
@@ -247,7 +244,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   SubscriberItem.prototype.resolve = function () {
     removeLoadingIcon(this.card)
     if (this.next) {
-      console.log('TEST', new Date().getTime(), '[subscriber:' + name + '] next ->. ' + this.next.streamName)
+      console.log('TEST', new Date().getTime(), '[subscriber:' + this.streamName + '] next ->. ' + this.next.streamName)
       this.next.execute(this.baseConfiguration);
     }
   }
@@ -262,7 +259,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     clearTimeout(this.resetTimeout)
     if (this.disposed) return
 
-    console.log('TEST', 'To !!disposeDD ' + self.disposed)
+    //    console.log('TEST', 'To !!disposeDD ' + self.disposed)
     this.resetTimeout = setTimeout(() => {
       clearTimeout(this.resetTimeout);
       console.log('TEST', '[subscriber:' + this.streamName + '] retry.')
@@ -270,7 +267,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }, 2000)
   }
   SubscriberItem.prototype.dispose = function () {
-    console.log('TEST', 'To dispose ' + this.streamName)
+    //    console.log('TEST', 'To dispose ' + this.streamName)
     clearTimeout(this.resetTimeout)
     this.disposed = true
     this.close()
@@ -286,17 +283,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         el.parentNode.removeChild(el);
       }
       this.statusField.innerText = 'CLOSED'
-      if (this.unexpectedClose && !this.disposed) {
+      if (!this.disposed) {
         this.reset()
       } else {
         console.log('TEST', 'To disposeDD ' + this.streamName)
-        delete ConferenceSubscriberItem[name]
-        delete subscriberMap[name]
+        delete ConferenceSubscriberItem[this.streamName]
+        delete subscriberMap[this.streamName]
       }
       this.requestLayoutFn()
     }
     if (this.subscriber) {
-      this.subscriber.off('*', this.respond);    
+      this.subscriber.off('*', this.respond);
       this.subscriber.unsubscribe().then(cleanup).catch(cleanup);
     }
     if (this.audioDecoy) {
@@ -339,7 +336,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     removeAll: names => {
       while (names.length > 0) {
         let name = names.shift()
-        console.log('TEST', 'TO shift: ' + name, ConferenceSubscriberItemMap)
+        //        console.log('TEST', 'TO shift: ' + name, ConferenceSubscriberItemMap)
         let item = ConferenceSubscriberItemMap[name]
         if (item) {
           item.dispose()
