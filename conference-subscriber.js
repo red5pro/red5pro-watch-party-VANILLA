@@ -160,6 +160,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.next = undefined;
     this.parent = parent;
     this.requestLayoutFn = requestLayoutFn
+
     this.card = generateNewSubscriberDOM(this.streamName, this.subscriptionId, this.parent);
     this.statusField = this.card.getElementsByClassName('subscriber-status-field')[0];
     this.toggleVideoPoster = this.toggleVideoPoster.bind(this);
@@ -171,6 +172,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     console.log('TEST', 'To UNdisposeDD ' + this.streamName)
     this.resetTimout = 0
     this.disposed = false
+    this.unexpectedClose = false
     ConferenceSubscriberItemMap[this.streamName] = this
 
     addLoadingIcon(this.card)
@@ -211,6 +213,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       video.classList.remove('hidden');
     }
   }
+  SubscriberItem.prototype.respond = function (event) {
+    if (event.type === 'Subscribe.Time.Update') return;
+
+    console.log('TEST', '[subscriber:' + name + '] ' + event.type);
+
+    var inFailedState = updateSuscriberStatusFromEvent(event, this.statusField);
+    if (event.type === 'Subscribe.Metadata') {
+      if (event.data.streamingMode) {
+        this.handleStreamingModeMetadata(event.data.streamingMode)
+        this.toggleVideoPoster(!event.data.streamingMode.match(/Video/));
+      }
+    } else if (event.type === 'Subscribe.Connection.Closed') {
+      this.close()
+    } else if (event.type === 'Subscriber.Play.Unpublish') {
+      this.unexpectedClose = false
+      this.close()
+    } else if (event.type === 'Connect.Failure') {
+      this.unexpectedClose = true
+      this.reject()
+    } else if (event.type === 'Subscribe.Start') {
+      this.resolve()
+    } else if (event.type === 'Subscribe.Fail') {
+      this.unexpectedClose = true
+      this.reject()
+      this.close()
+    }
+
+    if (inFailedState) {
+      this.close();
+    }
+  }
   SubscriberItem.prototype.resolve = function () {
     removeLoadingIcon(this.card)
     if (this.next) {
@@ -225,11 +258,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       this.next.execute(this.baseConfiguration);
     }
   }
-  SubscriberItem.prototype.dispose = function () {
-    console.log('TEST', 'To dispose ' + this.streamName)
-    clearTimeout(this.resetTimeout)
-    this.disposed = true
-  }
   SubscriberItem.prototype.reset = function () {
     clearTimeout(this.resetTimeout)
     if (this.disposed) return
@@ -241,8 +269,43 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       new SubscriberItem(this.streamName, this.parent, this.index, this.requestLayoutFn).execute(this.baseConfiguration)
     }, 2000)
   }
+  SubscriberItem.prototype.dispose = function () {
+    console.log('TEST', 'To dispose ' + this.streamName)
+    clearTimeout(this.resetTimeout)
+    this.disposed = true
+    this.close()
+  }
+  SubscriberItem.prototype.close = function () {
+    if(this.closeCalled) return;
+
+    this.closeCalled = true;
+
+    const cleanup = () => {
+      var el = document.getElementById(getSubscriberElementId(this.streamName) + '-container')
+      if (el) {
+        el.parentNode.removeChild(el);
+      }
+      this.statusField.innerText = 'CLOSED'
+      if (this.unexpectedClose && !this.disposed) {
+        this.reset()
+      } else {
+        console.log('TEST', 'To disposeDD ' + this.streamName)
+        delete ConferenceSubscriberItem[name]
+        delete subscriberMap[name]
+      }
+      this.requestLayoutFn()
+    }
+    if (this.subscriber) {
+      this.subscriber.off('*', this.respond);    
+      this.subscriber.unsubscribe().then(cleanup).catch(cleanup);
+    }
+    if (this.audioDecoy) {
+      removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
+    }
+  }
   SubscriberItem.prototype.execute = function (config) {
     addLoadingIcon(this.card)
+    this.unexpectedClose = true
 
     this.baseConfiguration = config;
     var self = this;
@@ -252,69 +315,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       streamName: name,
                       subscriptionId: [this.subscriptionId, uid].join('-'),
                       mediaElementId: getSubscriberElementId(name)
-                    });
+    });
+
     this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('Subscribe.Start', this.resolve.bind(this));
-    this.subscriber.on('Connect.Failure', this.reject.bind(this));
-    var sub = this.subscriber;
-    var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
-    var toggleVideoPoster = this.toggleVideoPoster;
-    var statusField = this.statusField;
-    var reject = this.reject.bind(this);
-    var closeCalled = false;
-    var unexpectedClose = true;
-    var close = function (event) { // eslint-disable-line no-unused-vars
-      if(closeCalled) return;
-      closeCalled = true;
-
-      function cleanup () {
-        var el = document.getElementById(getSubscriberElementId(name) + '-container')
-        el.parentNode.removeChild(el);
-        self.statusField.innerText = 'CLOSED'
-        sub.off('*', respond);
-        sub.off('Subscribe.Fail', fail);
-        if (unexpectedClose && !self.disposed) {
-          self.reset()
-        } else {
-          console.log('TEST', 'To disposeDD ' + self.streamName)
-          delete ConferenceSubscriberItem[name]
-          delete subscriberMap[name]
-        }
-        self.requestLayoutFn()
-      }
-
-      sub.off('Subscribe.Play.Unpublish', close);
-      sub.off('Subscribe.Connection.Closed', close);
-      sub.unsubscribe().then(cleanup).catch(cleanup);
-      if (self.audioDecoy) {
-        removeAudioSubscriberDecoy(self.streamName, self.audioDecoy);
-      }
-    };
-    var fail = function (event) { // eslint-disable-line no-unused-vars
-      console.log('TEST', '[subscriber:' + name + '] fail.')
-      close();
-    };
-    var respond = function (event) {
-      if (event.type === 'Subscribe.Time.Update') return;
-      console.log('TEST', '[subscriber:' + name + '] ' + event.type);
-      var inFailedState = updateSuscriberStatusFromEvent(event, statusField);
-      if (event.type === 'Subscribe.Metadata') {
-        if (event.data.streamingMode) {
-          handleStreamingModeMetadata(event.data.streamingMode)
-          toggleVideoPoster(!event.data.streamingMode.match(/Video/));
-        }
-      } else if (event.type === 'Subscriber.Play.Unpublish') {
-        unexpectedClose = false
-      }
-      if (inFailedState) {
-        close();
-      }
-    };
-
-    this.subscriber.on('Subscribe.Play.Unpublish', close);
-    this.subscriber.on('Subscribe.Connection.Closed', close);
-    this.subscriber.on('Subscribe.Fail', fail);
-    this.subscriber.on('*', respond);
+    this.subscriber.on('*',  (e) => this.respond(e));
 
     this.subscriber.init(rtcConfig)
       .then(function (subscriber) {

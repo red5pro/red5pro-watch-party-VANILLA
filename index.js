@@ -82,6 +82,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var frameWidth = 0;
   var frameHeight = 0;
 
+  var forceClosed = false;
+  var PACKETS_OUT_TIME_LIMIT = 5000;
+  var packetsOutTimeout = 0;
+
+  function notifyOfPublishFailure () {
+    alert('There seems to be an issue with broadcasting your stream. Please reload this page and join again.')
+  }
+
+  function startPublishTimeout () {
+    packetsOutTimeout = setTimeout(() => {
+      clearTimeout(packetsOutTimeout)
+      // TODO: Notify something wrong.
+      notifyOfPublishFailure()
+    }, PACKETS_OUT_TIME_LIMIT)
+  }
+
   function updateStatistics (b, p, w, h) {
     //statisticsField.classList.remove('hidden');
     bitrateField.innerText = b === 0 ? 'N/A' : Math.floor(b);
@@ -94,6 +110,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     packetsSent = p;
     updateStatistics(bitrate, packetsSent, frameWidth, frameHeight);
     if (packetsSent > 100) {
+      clearTimeout(packetsOutTimeout)
       establishSocketHost(targetPublisher, roomField.value, streamNameField.value);
     }
   }
@@ -222,11 +239,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       console.log(event);
     } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
       window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
+    } else if (event.type === 'Publisher.Connection.Closed' && !forceClosed) {
+      notifyOfPublishFailure()
     }
     // updateStatusFromEvent(event);
   }
   function onPublishFail (message) {
     isPublishing = false;
+    notifyOfPublishFailure()
     console.error('[Red5ProPublisher] Publish Error :: ' + message);
   }
   function onPublishSuccess (publisher) {
@@ -318,7 +338,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function createMainVideo () {
+
+    const retry = () => {
+      var t = setTimeout(() => {
+        console.log('Retrying playback of main video.')
+        clearTimeout(t)
+        createMainVideo()
+      }, 1000)
+    }
+
     var mainVideo = new red5prosdk.RTCSubscriber();
+    mainVideo.on('*', event => {
+      if (event.type === 'Subscribe.Time.Update') return
+      console.log('DEMO', `demo event: ${event.type}.`)
+      if (event.type === 'Subscribe.Connection.Closed') {
+        retry()
+      }
+    })
     mainVideo.init({
       protocol: 'wss',
       port: 443,
@@ -346,6 +382,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     .catch(function(error) {
       // A fault occurred while trying to initialize and playback the stream.
       console.error(error)
+      retry()
     });
   
   }
@@ -392,6 +429,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     targetPublisher.publish(name)
       .then(function () {
         onPublishSuccess(targetPublisher);
+        createMainVideo();
         updateInitialMediaOnPublisher();
       })
       .catch(function (error) {
@@ -403,6 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function unpublish () {
+    forceClose = true
     if (hostSocket !== undefined)  {
       hostSocket.close()
     }
@@ -426,7 +465,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     .then(function (publisherImpl) {
       targetPublisher = publisherImpl;
       targetPublisher.on('*', onPublisherEvent);
-      createMainVideo();
       return targetPublisher.preview();
     })
     .catch(function (error) {
@@ -438,6 +476,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var shuttingDown = false;
   function shutdown () {
+    forceClose = true
     if (shuttingDown) return;
     shuttingDown = true;
     function clearRefs () {
