@@ -34,12 +34,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
   }
 
+  var isDebug = window.getParameterByName('debug')
+
   var subscriberMap = {};
+  var ConferenceSubscriberItemMap = {}
   var streamNameField = document.getElementById('streamname-field');
   var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
   var subscriberTemplate = '' +
-        '<div class="subscriber-session">' +
-          '<p class="subscriber-status-field hidden">On hold.</p>' +
+        '<div>' +
+          '<p class="debug' + ((isDebug) ? '' : 'hidden') + '"></p>' +
+        '</div>' +
+        '<div class="subscriber-session hidden">' +
+          '<p class="subscriber-status-field">On hold.</p>' +
         '</div>' +
         '<div class="video-holder">' +
           '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
@@ -143,8 +149,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     decoy.unsubscribe();
   }
 
-  var SubscriberItem = function (subStreamName, parent, index) {
-    this.subscriptionId = [streamNameField.value, 'sub'].join('-');
+  var SubscriberItem = function (subStreamName, parent, index, requestLayoutFn) {
+    this.subscriptionId = [subStreamName, 'sub'].join('-');
     this.streamName = subStreamName;
     this.subscriber = undefined;
     this.baseConfiguration = undefined;
@@ -153,13 +159,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.index = index;
     this.next = undefined;
     this.parent = parent;
+    this.requestLayoutFn = requestLayoutFn
+
     this.card = generateNewSubscriberDOM(this.streamName, this.subscriptionId, this.parent);
     this.statusField = this.card.getElementsByClassName('subscriber-status-field')[0];
     this.toggleVideoPoster = this.toggleVideoPoster.bind(this);
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
+    this.card.querySelector('.debug').innerText = this.streamName
+
+    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
+    this.resetTimout = 0
+    this.disposed = false
+    this.unexpectedClose = false
+    ConferenceSubscriberItemMap[this.streamName] = this
+
     addLoadingIcon(this.card)
+    this.requestLayoutFn.call(null)
   }
   SubscriberItem.prototype.handleAudioDecoyVolumeChange = function (event) {
     if (this.audioDecoy) {
@@ -196,10 +213,41 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       video.classList.remove('hidden');
     }
   }
+  SubscriberItem.prototype.respond = function (event) {
+    if (event.type === 'Subscribe.Time.Update') return;
+
+    console.log('TEST', '[subscriber:' + name + '] ' + event.type);
+
+    var inFailedState = updateSuscriberStatusFromEvent(event, this.statusField);
+    if (event.type === 'Subscribe.Metadata') {
+      if (event.data.streamingMode) {
+        this.handleStreamingModeMetadata(event.data.streamingMode)
+        this.toggleVideoPoster(!event.data.streamingMode.match(/Video/));
+      }
+    } else if (event.type === 'Subscribe.Connection.Closed') {
+      this.close()
+    } else if (event.type === 'Subscriber.Play.Unpublish') {
+      this.unexpectedClose = false
+      this.close()
+    } else if (event.type === 'Connect.Failure') {
+      this.unexpectedClose = true
+      this.reject()
+    } else if (event.type === 'Subscribe.Start') {
+      this.resolve()
+    } else if (event.type === 'Subscribe.Fail') {
+      this.unexpectedClose = true
+      this.reject()
+      this.close()
+    }
+
+    if (inFailedState) {
+      this.close();
+    }
+  }
   SubscriberItem.prototype.resolve = function () {
     removeLoadingIcon(this.card)
     if (this.next) {
-      console.log('TEST', new Date().getTime(), '[subscriber:' + name + '] next ->.')
+      console.log('TEST', new Date().getTime(), '[subscriber:' + name + '] next ->. ' + this.next.streamName)
       this.next.execute(this.baseConfiguration);
     }
   }
@@ -210,8 +258,54 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       this.next.execute(this.baseConfiguration);
     }
   }
+  SubscriberItem.prototype.reset = function () {
+    clearTimeout(this.resetTimeout)
+    if (this.disposed) return
+
+    console.log('TEST', 'To !!disposeDD ' + self.disposed)
+    this.resetTimeout = setTimeout(() => {
+      clearTimeout(this.resetTimeout);
+      console.log('TEST', '[subscriber:' + this.streamName + '] retry.')
+      new SubscriberItem(this.streamName, this.parent, this.index, this.requestLayoutFn).execute(this.baseConfiguration)
+    }, 2000)
+  }
+  SubscriberItem.prototype.dispose = function () {
+    console.log('TEST', 'To dispose ' + this.streamName)
+    clearTimeout(this.resetTimeout)
+    this.disposed = true
+    this.close()
+  }
+  SubscriberItem.prototype.close = function () {
+    if(this.closeCalled) return;
+
+    this.closeCalled = true;
+
+    const cleanup = () => {
+      var el = document.getElementById(getSubscriberElementId(this.streamName) + '-container')
+      if (el) {
+        el.parentNode.removeChild(el);
+      }
+      this.statusField.innerText = 'CLOSED'
+      if (this.unexpectedClose && !this.disposed) {
+        this.reset()
+      } else {
+        console.log('TEST', 'To disposeDD ' + this.streamName)
+        delete ConferenceSubscriberItem[name]
+        delete subscriberMap[name]
+      }
+      this.requestLayoutFn()
+    }
+    if (this.subscriber) {
+      this.subscriber.off('*', this.respond);    
+      this.subscriber.unsubscribe().then(cleanup).catch(cleanup);
+    }
+    if (this.audioDecoy) {
+      removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
+    }
+  }
   SubscriberItem.prototype.execute = function (config) {
     addLoadingIcon(this.card)
+    this.unexpectedClose = true
 
     this.baseConfiguration = config;
     var self = this;
@@ -221,65 +315,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       streamName: name,
                       subscriptionId: [this.subscriptionId, uid].join('-'),
                       mediaElementId: getSubscriberElementId(name)
-                    });
-    this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('Subscribe.Start', this.resolve.bind(this));
-    this.subscriber.on('Connect.Failure', this.reject.bind(this));
-    var sub = this.subscriber;
-    var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
-    var toggleVideoPoster = this.toggleVideoPoster;
-    var statusField = this.statusField;
-    var reject = this.reject.bind(this);
-    var closeCalled = false;
-    var close = function (event) { // eslint-disable-line no-unused-vars
-      if(closeCalled) return;
-      closeCalled = true;
-      function cleanup () {
-        var el = document.getElementById(getSubscriberElementId(name) + '-container')
-        el.parentNode.removeChild(el);
-        sub.off('*', respond);
-        sub.off('Subscribe.Fail', fail);
-      }
-      sub.off('Subscribe.Play.Unpublish', close);
-      sub.off('Subscribe.Connection.Closed', close);
-      sub.unsubscribe().then(cleanup).catch(cleanup);
-      if (self.audioDecoy) {
-        removeAudioSubscriberDecoy(self.streamName, self.audioDecoy);
-      }
-      delete subscriberMap[name];
-    };
-    var fail = function (event) { // eslint-disable-line no-unused-vars
-      close();
-      console.log('TEST', '[subscriber:' + name + '] fail.')
-      var t = setTimeout(function () {
-        clearTimeout(t);
-        console.log('TEST', '[subscriber:' + name + '] retry.')
-        new SubscriberItem(self.streamName, self.parent, self.index).execute();
-      }, 2000);
-    };
-    var respond = function (event) {
-      if (event.type === 'Subscribe.Time.Update') return;
-      console.log('[subscriber:' + name + '] ' + event.type);
-      var inFailedState = updateSuscriberStatusFromEvent(event, statusField);
-      if (event.type === 'Subscribe.Metadata') {
-        if (event.data.streamingMode) {
-          handleStreamingModeMetadata(event.data.streamingMode)
-          toggleVideoPoster(!event.data.streamingMode.match(/Video/));
-        }
-      }
-      if (inFailedState) {
-        close();
-      }
-    };
+    });
 
-    this.subscriber.on('Subscribe.Play.Unpublish', close);
-    this.subscriber.on('Subscribe.Connection.Closed', close);
-    this.subscriber.on('Subscribe.Fail', fail);
-    this.subscriber.on('*', respond);
+    this.subscriber = new red5prosdk.RTCSubscriber();
+    this.subscriber.on('*',  (e) => this.respond(e));
 
     this.subscriber.init(rtcConfig)
       .then(function (subscriber) {
         subscriberMap[name] = subscriber;
+        self.requestLayoutFn.call(null)
         return subscriber.subscribe();
       })
       .catch(function (error) {
@@ -291,5 +335,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.getConferenceSubscriberElementContainerId = getSubscriberElementContainerId;
   window.getConferenceSubscriberElementId = getSubscriberElementId;
   window.ConferenceSubscriberItem = SubscriberItem;
+  window.ConferenceSubscriberUtil = {
+    removeAll: names => {
+      while (names.length > 0) {
+        let name = names.shift()
+        console.log('TEST', 'TO shift: ' + name, ConferenceSubscriberItemMap)
+        let item = ConferenceSubscriberItemMap[name]
+        if (item) {
+          item.dispose()
+        }
+      }
+    }
+  }
 
 })(window, document, window.red5prosdk);

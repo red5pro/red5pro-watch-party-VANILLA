@@ -19,6 +19,14 @@ WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+.debug {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  color: red;
+  z-index: 1000;
+}
+
 .main {
   display: flex;
   flex-direction: column;
@@ -40,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   width: calc(100vw - (100vw / 5));
   height: calc(100vh - (100vh / 4));
   text-align: center;
+  background-color: #222;
 }
 
 .side-viewers {
@@ -63,7 +72,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   flex-direction: row;
   max-height: calc(100vh / 4);
-  background-color: black;
+  background-color: #222;
 }
 
 .subscribers-full {
@@ -78,7 +87,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   flex-direction: column-reverse;
   align-items: stretch;
-  background-color: black;
+  background-color: #222;
 }
 
 /*.subscribers {

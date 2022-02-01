@@ -27,6 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   'use strict';
 
   var isPublishing = false;
+  var isDebug = window.getParameterByName('debug')
 
   var serverSettings = (function() {
     var settings = sessionStorage.getItem('r5proServerSettings');
@@ -81,6 +82,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var frameWidth = 0;
   var frameHeight = 0;
 
+  var forceClosed = false;
+  var PACKETS_OUT_TIME_LIMIT = 5000;
+  var packetsOutTimeout = 0;
+
+  function notifyOfPublishFailure () {
+    alert('There seems to be an issue with broadcasting your stream. Please reload this page and join again.')
+  }
+
+  function startPublishTimeout () {
+    packetsOutTimeout = setTimeout(() => {
+      clearTimeout(packetsOutTimeout)
+      // TODO: Notify something wrong.
+      notifyOfPublishFailure()
+    }, PACKETS_OUT_TIME_LIMIT)
+  }
+
   function updateStatistics (b, p, w, h) {
     //statisticsField.classList.remove('hidden');
     bitrateField.innerText = b === 0 ? 'N/A' : Math.floor(b);
@@ -93,6 +110,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     packetsSent = p;
     updateStatistics(bitrate, packetsSent, frameWidth, frameHeight);
     if (packetsSent > 100) {
+      clearTimeout(packetsOutTimeout)
       establishSocketHost(targetPublisher, roomField.value, streamNameField.value);
     }
   }
@@ -110,6 +128,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   joinButton.addEventListener('click', function () {
     saveSettings();
+    if (isDebug) {
+      document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
+      document.querySelector('.debug').innerText = streamName;
+    }
     doPublish(streamName);
     setPublishingUI(streamName);
   });
@@ -217,11 +239,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       console.log(event);
     } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
       window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
+    } else if (event.type === 'Publisher.Connection.Closed' && !forceClosed) {
+      notifyOfPublishFailure()
     }
     // updateStatusFromEvent(event);
   }
   function onPublishFail (message) {
     isPublishing = false;
+    notifyOfPublishFailure()
     console.error('[Red5ProPublisher] Publish Error :: ' + message);
   }
   function onPublishSuccess (publisher) {
@@ -307,14 +332,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
       if (roomName === payload.room) {
-        streamsList = payload.streams
-        processStreams(streamsList, streamName);
+        processStreams(payload.streams, streamsList, streamName);
       }
     }
   }
 
   function createMainVideo () {
+
+    const retry = () => {
+      var t = setTimeout(() => {
+        console.log('Retrying playback of main video.')
+        clearTimeout(t)
+        createMainVideo()
+      }, 1000)
+    }
+
     var mainVideo = new red5prosdk.RTCSubscriber();
+    mainVideo.on('*', event => {
+      if (event.type === 'Subscribe.Time.Update') return
+      console.log('DEMO', `demo event: ${event.type}.`)
+      if (event.type === 'Subscribe.Connection.Closed') {
+        retry()
+      }
+    })
     mainVideo.init({
       protocol: 'wss',
       port: 443,
@@ -342,6 +382,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     .catch(function(error) {
       // A fault occurred while trying to initialize and playback the stream.
       console.error(error)
+      retry()
     });
   
   }
@@ -388,6 +429,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     targetPublisher.publish(name)
       .then(function () {
         onPublishSuccess(targetPublisher);
+        createMainVideo();
         updateInitialMediaOnPublisher();
       })
       .catch(function (error) {
@@ -399,6 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function unpublish () {
+    forceClose = true
     if (hostSocket !== undefined)  {
       hostSocket.close()
     }
@@ -422,7 +465,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     .then(function (publisherImpl) {
       targetPublisher = publisherImpl;
       targetPublisher.on('*', onPublisherEvent);
-      createMainVideo();
       return targetPublisher.preview();
     })
     .catch(function (error) {
@@ -434,6 +476,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var shuttingDown = false;
   function shutdown () {
+    forceClose = true
     if (shuttingDown) return;
     shuttingDown = true;
     function clearRefs () {
@@ -459,46 +502,58 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function positionExisting (list) {
     list.forEach((name, index) => {
       const elementContainer = document.getElementById(window.getConferenceSubscriberElementContainerId(name))
-      if  (index < bottomRowLimit) {
+      if  (elementContainer && index < bottomRowLimit) {
         if (elementContainer.parentNode && elementContainer.parentNode !== bottomSubscribersEl) {
           elementContainer.parentNode.removeChild(elementContainer)
           bottomSubscribersEl.appendChild(elementContainer)
         }
-      } else {
+      } else if (elementContainer) {
         if (elementContainer.parentNode && elementContainer.parentNode !== sideSubscribersEl) {
-          element.parentNode.removeChild(elementContainer)
+          elementContainer.parentNode.removeChild(elementContainer)
           sideSubscribersEl.appendChild(elementContainer)
         }
       }
     })
   }
 
-  function processStreams (streamlist, exclusion) {
-    var nonPublishers = streamlist.filter(function (name) {
-      return name !== exclusion;
-    });
-    var existing = nonPublishers.filter((name, index, self) => {
-      return (index == self.indexOf(name)) && document.getElementById(window.getConferenceSubscriberElementId(name))
-    })
-    var toAdd = nonPublishers.filter(function (name, index, self) {
-      return (index == self.indexOf(name)) &&
-        !document.getElementById(window.getConferenceSubscriberElementId(name));
-    });
-
-    positionExisting(existing)
-    let lastIndex = existing.length
-    var subscribers = toAdd.map(function (name, index) {
-      const parent = lastIndex++ < bottomRowLimit ? bottomSubscribersEl : sideSubscribersEl
-      return new window.ConferenceSubscriberItem(name, parent, index);
-    });
-
-    if (nonPublishers.length >= bottomRowLimit) {
+  function relayout () {
+    const nonPublishers = streamsList.filter(name => name !== streamName)
+    positionExisting(nonPublishers)
+    if (bottomSubscribersEl.children.length >= bottomRowLimit) {
       bottomSubscribersEl.classList.add('subscribers-full')
       document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.add('red5pro-subscriber-full'))
     } else {
       bottomSubscribersEl.classList.remove('subscribers-full')
       document.querySelectorAll('red5pro-subscriber').forEach(el => el.classList.remove('red5pro-subscriber-full'))
     }
+  }
+
+  function processStreams (list, previousList, exclusion) {
+    console.log('TEST', `To streams: ${list}`)
+    var nonPublishers = list.filter(function (name) {
+      return name !== exclusion;
+    });
+    var existing = nonPublishers.filter((name, index, self) => {
+      return (index == self.indexOf(name) && previousList.indexOf(name) !== -1)
+    })
+    var toAdd = nonPublishers.filter(function (name, index, self) {
+      return (index == self.indexOf(name) && previousList.indexOf(name) === -1)
+    })
+    var toRemove = previousList.filter((name, index, self) => {
+      return (index == self.indexOf(name) && list.indexOf(name) === -1)
+    })
+    console.log('TEST', `To add: ${toAdd}`)
+    console.log('TEST', `To remove: ${toRemove}`)
+    window.ConferenceSubscriberUtil.removeAll(toRemove)
+    streamsList = list
+
+    positionExisting(existing)
+    let lastIndex = existing.length
+    var subscribers = toAdd.map(function (name, index) {
+      const parent = lastIndex++ < bottomRowLimit ? bottomSubscribersEl : sideSubscribersEl
+      return new window.ConferenceSubscriberItem(name, parent, index, relayout);
+    });
+    relayout()
 
     var i, length = subscribers.length - 1;
     var sub;
