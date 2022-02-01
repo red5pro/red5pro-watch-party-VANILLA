@@ -26,7 +26,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   
     // http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
-    function getParameterByName(name, url) { // eslint-disable-line no-unused-vars
+    window.getParameterByName = function (name, url) { // eslint-disable-line no-unused-vars
       if (!url) {
         url = window.location.href;
       }

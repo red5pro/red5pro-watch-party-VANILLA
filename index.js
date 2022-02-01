@@ -27,6 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   'use strict';
 
   var isPublishing = false;
+  var isDebug = window.getParameterByName('debug')
 
   var serverSettings = (function() {
     var settings = sessionStorage.getItem('r5proServerSettings');
@@ -110,7 +111,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   joinButton.addEventListener('click', function () {
     saveSettings();
-    document.querySelector('.debug').innerText = streamName;
+    if (isDebug) {
+      document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
+      document.querySelector('.debug').innerText = streamName;
+    }
     doPublish(streamName);
     setPublishingUI(streamName);
   });

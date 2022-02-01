@@ -34,13 +34,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
   }
 
+  var isDebug = window.getParameterByName('debug')
+
   var subscriberMap = {};
   var ConferenceSubscriberItemMap = {}
   var streamNameField = document.getElementById('streamname-field');
   var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
   var subscriberTemplate = '' +
-        '<div class="subscriber-session">' +
-          '<p class="subscriber-name-field"></p>' +
+        '<div>' +
+          '<p class="debug' + ((isDebug) ? '' : 'hidden') + '"></p>' +
+        '</div>' +
+        '<div class="subscriber-session hidden">' +
           '<p class="subscriber-status-field">On hold.</p>' +
         '</div>' +
         '<div class="video-holder">' +
@@ -162,7 +166,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
-    this.card.querySelector('.subscriber-name-field').innerText = this.streamName
+    this.card.querySelector('.debug').innerText = this.streamName
 
     console.log('TEST', 'To UNdisposeDD ' + this.streamName)
     this.resetTimout = 0

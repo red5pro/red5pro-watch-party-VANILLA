@@ -20,10 +20,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 .debug {
-  position: fixed;
+  position: absolute;
   left: 10px;
   top: 10px;
-  color: white;
+  color: red;
+  z-index: 1000;
 }
 
 .main {
