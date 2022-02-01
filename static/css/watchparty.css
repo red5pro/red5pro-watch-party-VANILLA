@@ -63,7 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .bottom-viewers {
   flex-grow: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: row-reverse;
   /*max-height: calc(100vh / 4);*/
 }
 
@@ -136,7 +136,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 .publisher-container, .subscriber-container {
   width: 100%;
-  background-color: #3b3b3b;
+  background-color: #000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .subscriber-container {
   margin: 10px;
@@ -174,7 +178,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   font-size: 0.7em;
 }
 .publisher-section {
-  max-width: 320px;
+  max-width: 640px;
 }
 .margin-center {
   margin: 0 auto;
@@ -190,7 +194,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   font-size: 1em;
   height: 1.5rem;
   padding-left: 0.8rem;
-  max-width: 142px;
+  max-width: 240px;
 }
 .info-title {
   padding: 20px 0;

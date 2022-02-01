@@ -167,7 +167,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
-    this.card.querySelector('.debug').innerText = this.streamName
+    if (this.card.querySelector('.debug')) {
+      this.card.querySelector('.debug').innerText = this.streamName
+    }
 
     //    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
     this.resetTimout = 0
