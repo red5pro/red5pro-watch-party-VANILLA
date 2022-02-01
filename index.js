@@ -310,6 +310,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function setPublishingUI (streamName) {
+    const tray = document.querySelector('.bottom-viewers')
+    const pubView = document.querySelector('#red5pro-publisher')
+    pubView.parentNode.removeChild(pubView)
+    tray.appendChild(pubView)
+    pubView.classList.add('red5pro-publisher')
+
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
