@@ -61,6 +61,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
   var socketEndpoint = window.query('socket') || 'localhost';
+  var hostEndpoint = window.getParameterByName('host');
+  configuration.host = hostEndpoint || configuration.host
   
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
