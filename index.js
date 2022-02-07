@@ -27,7 +27,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   'use strict';
 
   var isPublishing = false;
-  var isDebug = window.getParameterByName('debug')
+  var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
+  var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
 
   var serverSettings = (function() {
     var settings = sessionStorage.getItem('r5proServerSettings');
@@ -55,6 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var updateStatusFromEvent = window.red5proHandlePublisherEvent; // defined in src/template/partial/status-field-publisher.hbs
 
   var targetPublisher;
+  var mediaStream;
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
@@ -139,7 +141,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
       document.querySelector('.debug').innerText = streamName;
     }
-    doPublish(streamName);
+    doPublish(roomName, streamName);
     setPublishingUI(streamName);
   });
 
@@ -245,7 +247,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (event.type === 'WebSocket.Message.Unhandled') {
       console.log(event);
     } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
-      window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
+//      window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
     } else if (event.type === 'Publisher.Connection.Closed' && !forceClosed) {
       notifyOfPublishFailure()
     }
@@ -350,7 +352,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
 
-  function createMainVideo () {
+  const createMainVideo = async () => {
 
     const retry = () => {
       var t = setTimeout(() => {
@@ -360,97 +362,134 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }, 1000)
     }
 
-    var mainVideo = new red5prosdk.RTCSubscriber();
-    mainVideo.on('*', event => {
-      if (event.type === 'Subscribe.Time.Update') return
-      console.log('DEMO', `demo event: ${event.type}.`)
-      if (event.type === 'Subscribe.Connection.Closed') {
-        retry()
+    try {
+
+      let config = {
+        protocol: 'wss',
+        port: 443,
+        host: 'demo-live.red5.net',
+        app: 'live',
+        streamName: 'demo-stream',
+        mediaElementId: 'red5pro-mainVideoView',
+        subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
       }
-    })
-    mainVideo.init({
-      protocol: 'wss',
-      port: 443,
-      host: 'demo-live.red5.net',
-      app: 'live',
-      streamName: 'demo-stream',
-      rtcConfiguration: {
-        iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
-        iceCandidatePoolSize: 2,
-        bundlePolicy: 'max-bundle'
-      }, // See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#RTCConfiguration_dictionary
-      mediaElementId: 'red5pro-mainVideoView',
-      subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16),
-      videoEncoding: 'NONE',
-      audioEncoding: 'NONE',
-    })
-    .then(function(mainVideo) {
-      return mainVideo.subscribe();
-    })
-    .then(function(mainVideo) {
-      // subscription is complete.
-      // playback should begin immediately due to
-      //   declaration of `autoplay` on the `video` element.
-    })
-    .catch(function(error) {
-      // A fault occurred while trying to initialize and playback the stream.
+      if (isSM) {
+        const payload = await window.getEdge('demo-live.red5.net', 'live', 'demo-stream_3')
+        const { scope, serverAddress } = payload
+        config = {...config, ...{
+          app: 'streammanager',
+          connectionParams: {
+            host: serverAddress,
+            app: scope
+          }
+        }}
+      }
+      var mainVideo = new red5prosdk.RTCSubscriber();
+      mainVideo.on('*', event => {
+        if (event.type === 'Subscribe.Time.Update') return
+        console.log('DEMO', `demo event: ${event.type}.`)
+        if (event.type === 'Subscribe.Connection.Closed') {
+          retry()
+        }
+      })
+      mainVideo.init(config)
+      .then(function(mainVideo) {
+        return mainVideo.subscribe();
+      })
+      .then(function(mainVideo) {
+        // subscription is complete.
+        // playback should begin immediately due to
+        //   declaration of `autoplay` on the `video` element.
+      })
+      .catch(function(error) {
+        // A fault occurred while trying to initialize and playback the stream.
+        console.error(error)
+        retry()
+      });
+    } catch (e) {
       console.error(error)
       retry()
-    });
-  
+    }
   }
 
-  function determinePublisher () {
-
-    var config = Object.assign({},
-                      configuration,
-                      {
-                        streamMode: configuration.recordBroadcast ? 'record' : 'live'
-                      },
-                      getAuthenticationParams(),
-                      getUserMediaConfiguration());
-
-    var rtcConfig = Object.assign({}, config, {
-                      protocol: getSocketLocationFromProtocol().protocol,
-                      port: getSocketLocationFromProtocol().port,
-                      bandwidth: {
-                        video: 256
-                      },
-                      mediaConstraints: {
-                        audio: true,
-                        video: {
-                          width: {
-                            exact: 320
-                          },
-                          height: {
-                            exact: 240
-                          },
-                          frameRate: {
-                            exact: 15
-                          }
-                        }
-                      },
-                      streamName: streamName
-                   });
-
-    var publisher = new red5prosdk.RTCPublisher();
-    return publisher.init(rtcConfig);
-
-  }
-
-  function doPublish (name) {
-    targetPublisher.publish(name)
-      .then(function () {
-        onPublishSuccess(targetPublisher);
-        createMainVideo();
-        updateInitialMediaOnPublisher();
+  const startPreview = async () => {
+    const element = document.querySelector('#red5pro-publisher')
+    const constraints = {
+      audio: true,
+      video: {
+        width: {
+          exact: 320
+        },
+        height: {
+          exact: 240
+        },
+        frameRate: {
+          exact: 15
+        }
+      }
+    }
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
+      document.querySelector('#red5pro-publisher').srcObject = mediaStream
+      window.allowMediaStreamSwap(element, constraints, mediaStream, activeStream => {
+        mediaStream = activeStream
       })
-      .catch(function (error) {
-        var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
-        console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
-        console.error(error);
-        onPublishFail(jsonError);
-       });
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const determinePublisher = async (mediaStream, room, name) => {
+
+    let config = Object.assign({},
+      configuration,
+      {
+        streamMode: configuration.recordBroadcast ? 'record' : 'live'
+      },
+      getAuthenticationParams(),
+      getUserMediaConfiguration());
+
+    let rtcConfig = Object.assign({}, config, {
+      protocol: getSocketLocationFromProtocol().protocol,
+      port: getSocketLocationFromProtocol().port,
+      bandwidth: {
+        video: 256
+      },
+      app: `live/${room}`,
+      streamName: name
+    });
+
+    if (isSM) {
+      let connectionParams = rtcConfig.connectionParams ? rtcConfig.connectionParams: {}
+      const payload = await window.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName)
+      const { scope, serverAddress } = payload
+      rtcConfig = {...rtcConfig, ...{
+        app: 'streammanager',
+        connectionParams: {...connectionParams, ...{
+          host: serverAddress,
+          app: scope
+        }}
+      }}
+    }
+    var publisher = new red5prosdk.RTCPublisher()
+    return await publisher.initWithStream(rtcConfig, mediaStream)
+  }
+
+  const doPublish = async (room, name) => {
+    try {
+      targetPublisher = await determinePublisher(mediaStream, room, name)
+      targetPublisher.on('*', onPublisherEvent)
+      await targetPublisher.publish(name)
+
+      onPublishSuccess(targetPublisher)
+      createMainVideo()
+      updateInitialMediaOnPublisher()
+    } catch (error) {
+      var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
+      console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
+      console.error(error);
+      onPublishFail(jsonError);
+    }
   }
 
   function unpublish () {
@@ -474,18 +513,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   // Kick off.
-  determinePublisher()
-    .then(function (publisherImpl) {
-      targetPublisher = publisherImpl;
-      targetPublisher.on('*', onPublisherEvent);
-      return targetPublisher.preview();
-    })
-    .catch(function (error) {
-      var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
-      console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
-      console.error(error);
-      onPublishFail(jsonError);
-     });
+  startPreview()
 
   var shuttingDown = false;
   function shutdown () {
