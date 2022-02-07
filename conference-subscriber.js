@@ -34,7 +34,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
   }
 
-  var isDebug = window.getParameterByName('debug')
+  var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
+  var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
 
   var subscriberMap = {};
   var ConferenceSubscriberItemMap = {}
@@ -218,7 +219,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (event.type === 'Subscribe.Time.Update') return;
 
     console.log('TEST', '[subscriber:' + this.streamName + '] ' + event.type);
-
     var inFailedState = updateSuscriberStatusFromEvent(event, this.statusField);
     if (event.type === 'Subscribe.Metadata') {
       if (event.data.streamingMode) {
@@ -302,7 +302,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
     }
   }
-  SubscriberItem.prototype.execute = function (config) {
+  SubscriberItem.prototype.execute = async function (config) {
     addLoadingIcon(this.card)
     this.unexpectedClose = true
 
@@ -316,19 +316,31 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       mediaElementId: getSubscriberElementId(name)
     });
 
-    this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('*',  (e) => this.respond(e));
+    try {
+      if (isSM) {
+        const payload = await window.streamManagerUtil.getEdge(rtcConfig.host, rtcConfig.app, name)
+        const { scope, serverAddress } = payload
+        rtcConfig = {...rtcConfig, ...{
+          app: 'streammanager',
+          connectionParams: {
+            host: serverAddress,
+            app: scope
+          }
+        }}
+      }
 
-    this.subscriber.init(rtcConfig)
-      .then(function (subscriber) {
-        subscriberMap[name] = subscriber;
-        self.requestLayoutFn.call(null)
-        return subscriber.subscribe();
-      })
-      .catch(function (error) {
-        console.log('[subscriber:' + name + '] Error');
-        reject(error);
-      });
+      this.subscriber = new red5prosdk.RTCSubscriber()
+      this.subscriber.on('*',  (e) => this.respond(e))
+
+      await this.subscriber.init(rtcConfig)
+      subscriberMap[name] = this.subscriber
+      self.requestLayoutFn.call(null)
+      await this.subscriber.subscribe()
+
+    } catch (error) {
+      console.log('[subscriber:' + name + '] Error')
+      self.reject(error)
+    }
   }
 
   window.getConferenceSubscriberElementContainerId = getSubscriberElementContainerId;

@@ -347,7 +347,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
       if (roomName === payload.room) {
-        processStreams(payload.streams, streamsList, streamName);
+        processStreams(payload.streams, streamsList, roomName, streamName);
       }
     }
   }
@@ -373,8 +373,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         mediaElementId: 'red5pro-mainVideoView',
         subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
       }
+      /* No Stream Manager support for main video.
       if (isSM) {
-        const payload = await window.getEdge('demo-live.red5.net', 'live', 'demo-stream_3')
+        const payload = await window.streamManagerUtil.getEdge('demo-live.red5.net', 'live', 'demo-stream_3')
         const { scope, serverAddress } = payload
         config = {...config, ...{
           app: 'streammanager',
@@ -384,6 +385,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           }
         }}
       }
+      */
       var mainVideo = new red5prosdk.RTCSubscriber();
       mainVideo.on('*', event => {
         if (event.type === 'Subscribe.Time.Update') return
@@ -392,20 +394,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           retry()
         }
       })
-      mainVideo.init(config)
-      .then(function(mainVideo) {
-        return mainVideo.subscribe();
-      })
-      .then(function(mainVideo) {
-        // subscription is complete.
-        // playback should begin immediately due to
-        //   declaration of `autoplay` on the `video` element.
-      })
-      .catch(function(error) {
-        // A fault occurred while trying to initialize and playback the stream.
-        console.error(error)
-        retry()
-      });
+      await mainVideo.init(config)
+      await mainVideo.subscribe()
     } catch (e) {
       console.error(error)
       retry()
@@ -461,7 +451,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     if (isSM) {
       let connectionParams = rtcConfig.connectionParams ? rtcConfig.connectionParams: {}
-      const payload = await window.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName)
+      const payload = await window.streamManagerUtil.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName)
       const { scope, serverAddress } = payload
       rtcConfig = {...rtcConfig, ...{
         app: 'streammanager',
@@ -595,7 +585,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     // console.log('ERRANT SWEEP', errantNames)
   }
 
-  function processStreams (list, previousList, exclusion) {
+  function processStreams (list, previousList, roomName, exclusion) {
     console.log('TEST', `To streams: ${list}`)
     var nonPublishers = list.filter(function (name) {
       return name !== exclusion;
@@ -630,13 +620,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
     if (subscribers.length > 0) {
       var baseSubscriberConfig = Object.assign({},
-                                  configuration,
-                                  {
-                                    protocol: getSocketLocationFromProtocol().protocol,
-                                    port: getSocketLocationFromProtocol().port
-                                  },
-                                  getAuthenticationParams(),
-                                  getUserMediaConfiguration());
+        configuration,
+        {
+          protocol: getSocketLocationFromProtocol().protocol,
+          port: getSocketLocationFromProtocol().port
+        },
+        getAuthenticationParams(), 
+        {
+          app: `live/${roomName}`
+        });
       subscribers[0].execute(baseSubscriberConfig);
     }
   }
