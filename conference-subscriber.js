@@ -36,6 +36,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
   var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
+  var isTranscode = window.getParameterByName('transcode') && window.getParameterByName('transcode') === 'true'
 
   var subscriberMap = {};
   var ConferenceSubscriberItemMap = {}
@@ -152,7 +153,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var SubscriberItem = function (subStreamName, parent, index, requestLayoutFn) {
     this.subscriptionId = [subStreamName, 'sub'].join('-');
-    this.streamName = subStreamName;
+    this.streamName = subStreamName
     this.subscriber = undefined;
     this.baseConfiguration = undefined;
     this.streamingMode = undefined;
@@ -308,12 +309,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     this.baseConfiguration = config;
     var self = this;
-    var name = this.streamName;
+    var name = isTranscode ? [this.streamName, '3'].join('_') : this.streamName;
     var uid = Math.floor(Math.random() * 0x10000).toString(16);
     var rtcConfig = Object.assign({}, config, {
                       streamName: name,
                       subscriptionId: [this.subscriptionId, uid].join('-'),
-                      mediaElementId: getSubscriberElementId(name)
+                      mediaElementId: getSubscriberElementId(this.streamName)
     });
 
     try {
@@ -333,13 +334,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       this.subscriber.on('*',  (e) => this.respond(e))
 
       await this.subscriber.init(rtcConfig)
-      subscriberMap[name] = this.subscriber
+      subscriberMap[this.streamName] = this.subscriber
       self.requestLayoutFn.call(null)
       await this.subscriber.subscribe()
 
     } catch (error) {
       console.log('[subscriber:' + name + '] Error')
       self.reject(error)
+      self.close()
     }
   }
 

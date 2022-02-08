@@ -170,7 +170,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function updateMediaStreamTrack (constraints, trackKind, callback, element) {
     navigator.mediaDevices.getUserMedia(constraints)
       .then(function (stream) {
-        callback(stream)
+        callback(stream, constraints)
         element.srcObject = stream
       })
       .catch (function (error) {
@@ -221,6 +221,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         displayAvailableResolutions(deviceList[i].deviceId, hd)
       }
     }
+    return i
   }
 
   function setSelectedMicrophoneIndexFromTrack (track, deviceList) {
@@ -234,53 +235,60 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (i > -1) {
       microphoneSelect.selectedIndex = i;
     }
+    return i
   }
 
-  function updateAudioDeviceList (audioTrack, constraints, callback, element, devicePromise) {
-    devicePromise.then(function (devices) {
-        var mics = devices.filter(function (item) {
-          return item.kind === 'audioinput';
-        })
-        var options = mics.map(function (mic, index) {
-          return '<option value="' + mic.deviceId + '">' + (mic.label || 'camera ' + index) + '</option>';
-        });
-        microphoneSelect.innerHTML = options.join(' ');
-        microphoneSelect.addEventListener('change', function () {
-          onMicrophoneSelect(microphoneSelect.value, constraints, callback, element);
-        });
-        setSelectedMicrophoneIndexFromTrack(audioTrack, mics);
-      })
-      .catch(function (error) {
-        console.error('Could not access microphone devices: ' + error);
-      });
+  function updateAudioDeviceList (mics, audioTrack, constraints, callback, element) {
+    var options = mics.map(function (mic, index) {
+      return '<option value="' + mic.deviceId + '">' + (mic.label || 'camera ' + index) + '</option>';
+    });
+    microphoneSelect.innerHTML = options.join(' ');
+    microphoneSelect.addEventListener('change', function () {
+      onMicrophoneSelect(microphoneSelect.value, constraints, callback, element);
+    });
+    return setSelectedMicrophoneIndexFromTrack(audioTrack, mics);
   }
 
-  function updateCameraDeviceList (videoTrack, constraints, callback, element, devicePromise) {
-    devicePromise.then(function (devices) {
-        var cameras = devices.filter(function (item) {
-          return item.kind === 'videoinput';
-        })
-        var options = cameras.map(function (camera, index) {
-          return '<option value="' + camera.deviceId + '">' + (camera.label || 'camera ' + index) + '</option>';
-        });
-        cameraSelect.innerHTML = options.join(' ');
-        cameraSelect.addEventListener('change', function () {
-          onCameraSelect(cameraSelect.value, constraints, callback, element);
-        });
-        setSelectedCameraIndexFromTrack(videoTrack, cameras);
-      })
-      .catch(function (error) {
-        console.error('Could not access camera devices: ' + error);
-      });
+  function updateCameraDeviceList (cameras, videoTrack, constraints, callback, element) {
+    var options = cameras.map(function (camera, index) {
+      return '<option value="' + camera.deviceId + '">' + (camera.label || 'camera ' + index) + '</option>';
+    });
+    cameraSelect.innerHTML = options.join(' ');
+    cameraSelect.addEventListener('change', function () {
+      onCameraSelect(cameraSelect.value, constraints, callback, element);
+    });
+    return setSelectedCameraIndexFromTrack(videoTrack, cameras);
   }
 
-  function beginMediaMonitor (mediaStream, callback, constraints, element) {
+  const beginMediaMonitor = async (mediaStream, callback, constraints, element) => {
     var tracks = mediaStream.getTracks();
     var audioTracks = tracks.filter(function (track) { return track.kind === 'audio' });
     var videoTracks = tracks.filter(function (track) { return track.kind === 'video' });
-    var devicePromise = navigator.mediaDevices.enumerateDevices();
-    updateCameraDeviceList(videoTracks[0], constraints, callback, element, devicePromise);
-    updateAudioDeviceList(audioTracks[0], constraints, callback, element, devicePromise);
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const cameraDevices = devices.filter(d => d.kind === 'videoinput')
+      const audioDevices = devices.filter(d => d.kind === 'audioinput')
+      const cameraId = updateCameraDeviceList(cameraDevices, videoTracks[0], constraints, callback, element);
+      const audioId = updateAudioDeviceList(audioDevices, audioTracks[0], constraints, callback, element);
+      if (cameraId > -1) {
+        if (!constraints.video.deviceId) {
+          constraints.video.deviceId = {}
+        }
+        constraints.video.deviceId.exact = cameraDevices[cameraId].deviceId
+      }
+      if (audioId > -1) {
+        if (typeof constraints.audio === 'boolean') {
+          constraints.audio = {}
+        }
+        if (!constraints.audio.deviceId) {
+          constraints.audio.deviceId = {}
+        }
+        constraints.audio.deviceId.exact = audioDevices[audioId].deviceId
+      }
+      callback(mediaStream, constraints)
+    } catch (e) {
+      console.error('Could not access media devices: ' + e.message)
+    }
   }
 
   var hasBegunMonitor = false;

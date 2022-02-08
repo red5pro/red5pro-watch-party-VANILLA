@@ -29,7 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var isPublishing = false;
   var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
   var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
-  var smToken = window.getParameterByName('smToken') || 'xyz123'
+  var smToken = window.getParameterByName('smToken') || 'abc123'
   var isTranscode = window.getParameterByName('transcode') && window.getParameterByName('transcode') === 'true'
 
   var serverSettings = (function() {
@@ -59,6 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var targetPublisher;
   var mediaStream;
+  var mediaStreamConstraints;
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
@@ -96,23 +97,39 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   const STATE_TRANSCODE = 1
   const STATE_SETUP = 2
-  const STATE_IS_PUBLISHING = 3
+  const STATE_IS_STARTING = 3
+  const STATE_IS_PUBLISHING = 4
   const setState = state => {
     switch (state) {
       case STATE_TRANSCODE:
         Array.prototype.slice.call(document.querySelectorAll('.remove-on-transcode')).forEach(el => el.classList.add('hidden'))
         window.registerProvisionCallback(handleProvisionChange)
+        document.querySelector('#camera-select').disabled = false
+        document.querySelector('#microphone-select').disabled = false
+        document.querySelector('#room-field').disabled = false
+        document.querySelector('#streamname-field').disabled = false
+        joinButton.disabled = false
+        postProvisionButton.disabled = false
         postProvisionButton.addEventListener('click', handlePostProvisions, true)
         break;
       case STATE_SETUP:
         Array.prototype.slice.call(document.querySelectorAll('.remove-on-transcode')).forEach(el => el.classList.remove('hidden'))
         Array.prototype.slice.call(document.querySelectorAll('.remove-on-setup')).forEach(el => el.classList.add('hidden'))
-        if (isTranscode) {
-          document.querySelector('#camera-select').disabled = true
-          document.querySelector('#microphone-select').disabled = true
-          document.querySelector('#room-field').disabled = true
-          document.querySelector('#streamname-field').disabled = true
-        }
+        document.querySelector('#camera-select').disabled = false
+        document.querySelector('#microphone-select').disabled = false
+        document.querySelector('#room-field').disabled = false
+        document.querySelector('#streamname-field').disabled = false
+        joinButton.disabled = false
+        postProvisionButton.disabled = false
+        break;
+      case STATE_IS_STARTING:
+        document.querySelector('#camera-select').disabled = true
+        document.querySelector('#microphone-select').disabled = true
+        document.querySelector('#room-field').disabled = true
+        document.querySelector('#streamname-field').disabled = true
+        joinButton.disabled = true
+        postProvisionButton.disabled = true
+        postProvisionButton.removeEventListener('click', handlePostProvisions, true)
         break;
       case STATE_IS_PUBLISHING:
         createMainVideo()
@@ -140,11 +157,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   const handleProvisionChange = (list) => {
     selectedProvisions = list
   }
+
   const handlePostProvisions = async () => {
+    if (selectedProvisions.length < 3) {
+      showErrorAlert('Please select 3 Variants for provisioning the transcoder.')
+      return
+    }
     const host = configuration.host
     const name = streamNameField.value
     const room = roomField.value
-    transcoderPOST.stream = selectedProvisions.map((res, index) => {
+    let framerate = 15
+    const streams = selectedProvisions.map((res, index) => {
+      if (index === 0) framerate = res.frameRate
       return {
         level: index+1,
         name: `${name}_${index+1}`,
@@ -155,14 +179,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         }
       }
     }).reverse()
+    const highestLevel = streams.find(e => e.level === 1)
+    transcoderPOST.meta.stream = streams
     try {
       console.log('POST', transcoderPOST)
-      const payload = await window.streamManagerUtil.postTranscode(host, `live/${room}`, `${name}_1`, transcoderPOST, smToken)
+      const payload = await window.streamManagerUtil.postTranscode(host, `live/${room}`, `${name}`, transcoderPOST, smToken)
       console.log('PYALOAD', payload)
+      startBroadcastWithLevel(highestLevel, room, name, framerate)
     } catch (e) {
       console.error(e)
       if (/Provision already exists/.exec(e.message)) {
-        //       transcoderManifest = streams
+        startBroadcastWithLevel(highestLevel, room, name, framerate)
       } else {
         showErrorAlert(e.message)
       }
@@ -227,15 +254,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
       document.querySelector('.debug').innerText = streamName;
     }
-    doPublish(roomName, streamName);
-    setPublishingUI(streamName);
+    setState(STATE_IS_STARTING)
+    doPublish(mediaStream, roomName, streamName);
   });
 
   audioCheck.addEventListener('change', updateMutedAudioOnPublisher);
   videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
-  var isSecure = true; //protocol == 'https';
+  var isSecure = configuration.host.match(/localhost/) === null; //true; //protocol == 'https';
 
   function saveSettings () {
     streamName = streamNameField.value;
@@ -332,8 +359,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     console.log('[Red5ProPublisher] ' + event.type + '.');
     if (event.type === 'WebSocket.Message.Unhandled') {
       console.log(event);
-    } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
-//      window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
     } else if (event.type === 'Publisher.Connection.Closed' && !forceClosed) {
       notifyOfPublishFailure()
     }
@@ -495,10 +520,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       audio: true,
       video: {
         width: {
-          exact: 320
+          exact: 640
         },
         height: {
-          exact: 240
+          exact: 480
         },
         frameRate: {
           exact: 15
@@ -507,16 +532,58 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-      document.querySelector('#red5pro-publisher').srcObject = mediaStream
-      window.allowMediaStreamSwap(element, constraints, mediaStream, activeStream => {
+      mediaStreamConstraints = constraints
+      element.srcObject = mediaStream
+      window.allowMediaStreamSwap(element, constraints, mediaStream, (activeStream, activeConstraints) => {
         mediaStream = activeStream
+        mediaStreamConstraints = activeConstraints
+        console.log(mediaStream, mediaStreamConstraints)
       })
     } catch (e) {
       console.error(e)
     }
   }
 
-  const determinePublisher = async (mediaStream, room, name) => {
+  const startBroadcastWithLevel = async (level, room, name, framerate) => {
+    setState(STATE_IS_STARTING)
+    const element = document.querySelector('#red5pro-publisher')
+    const {
+      properties: {
+        videoWidth,
+        videoHeight,
+        videoBR
+      }
+    } = level
+    const deviceId = mediaStreamConstraints.video.deviceId.exact
+
+    const constraints = {
+      audio: true,
+      video: {
+        deviceId,
+        width: { exact: videoWidth },
+        height: { exact: videoHeight },
+        frameRate: { exact: framerate }
+      }
+    }
+
+    let stream
+    const bitrate = videoBR / 1000
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints)
+    } catch (e) {
+      showErrorAlert(e.message)
+      return
+    }
+    mediaStream = stream
+    element.srcObject = mediaStream
+    if (isDebug) {
+      document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
+      document.querySelector('.debug').innerText = name;
+    }
+    doPublish(mediaStream, room, name, bitrate)
+  }
+
+  const determinePublisher = async (mediaStream, room, name, bitrate = 256) => {
 
     let config = Object.assign({},
       configuration,
@@ -526,19 +593,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       getAuthenticationParams(),
       getUserMediaConfiguration());
 
+    const streamNameToUse = isTranscode ? `${name}_1` : name
     let rtcConfig = Object.assign({}, config, {
       protocol: getSocketLocationFromProtocol().protocol,
       port: getSocketLocationFromProtocol().port,
       bandwidth: {
-        video: 256
+        video: bitrate
       },
       app: `live/${room}`,
-      streamName: isTranscode ? `${name}_1` : name
+      streamName: streamNameToUse
     });
 
     if (isSM) {
       let connectionParams = rtcConfig.connectionParams ? rtcConfig.connectionParams: {}
-      const payload = await window.streamManagerUtil.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName, isTranscode)
+      const payload = await window.streamManagerUtil.getOrigin(rtcConfig.host, rtcConfig.app, name, isTranscode)
       const { scope, serverAddress } = payload
       rtcConfig = {...rtcConfig, ...{
         app: 'streammanager',
@@ -548,17 +616,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         }}
       }}
     }
+    console.log('PUBLISH', streamNameToUse, rtcConfig)
     var publisher = new red5prosdk.RTCPublisher()
     return await publisher.initWithStream(rtcConfig, mediaStream)
   }
 
-  const doPublish = async (room, name) => {
+  const doPublish = async (stream, room, name, bitrate = 256) => {
     try {
-      targetPublisher = await determinePublisher(mediaStream, room, name)
-      targetPublisher.on('*', onPublisherEvent)
-      await targetPublisher.publish(name)
+      const streamNameToUse = isTranscode ? `${name}_1` : name
 
+      targetPublisher = await determinePublisher(stream, room, name, bitrate)
+      targetPublisher.on('*', onPublisherEvent)
+      await targetPublisher.publish(streamNameToUse)
       onPublishSuccess(targetPublisher)
+      setPublishingUI(name)
     } catch (error) {
       var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
       console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
