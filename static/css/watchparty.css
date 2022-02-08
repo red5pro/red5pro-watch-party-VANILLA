@@ -261,3 +261,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   width: 100%;
   padding: 10px 0 20px 0;
 }
+
+.table {
+  width: 100%;
+}
+.table-row {
+  background-color: #fff;
+  cursor: pointer;
+}
+.table-entry {
+  padding: 10px;
+  border: 1px solid black;
+}
+.table-row-disabled {
+  background-color: #eee;
+  cursor: default;
+}
+.table-row-selected {
+  background-color: #cef0ff;
+}
+

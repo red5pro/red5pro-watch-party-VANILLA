@@ -23,6 +23,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     {{> header-scripts}}
     {{> header-stylesheets}}-->
     <title>Watch Party</title>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
     <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script>
     <script src="static/lib/screenfull/screenfull.min.js"></script>
     <script src="static/script/testbed-config.js"></script>
@@ -47,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
             controls autoplay playsinline muted
             width="100%" height="100%">
          </video>
-        <div class="settings-area remove-on-broadcast">
+        <div class="settings-area remove-on-broadcast remove-on-transcode">
           <p>
             <label for="room-field" class="device-label remove-on-broadcast">Room:</label>
             <input id="room-field" name="room-field" class="settings-input remove-on-broadcast">
@@ -63,7 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
           </p>
         </div>
         <div id="publisher-settings" class="publisher-settings">
-          <p class="remove-on-broadcast">
+          <p class="remove-on-broadcast remove-on-transcode">
             <label class="device-label" for="streamname-field">Stream Name:</label>
             <input id="streamname-field" name="streamname-field" class="settings-input">
           </p>
@@ -72,10 +73,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
             <label class="device-label" for="camera-select">Camera:</label>
             <select class="control device-control settings-input" name="camera-select" id="camera-select"></select>
           </p>
-          <p class="remove-on-broadcast">
+          <p class="remove-on-broadcast remove-on-transcode">
             <label class="device-label" for="microphone-select">Microphone:</label>
             <select class="control device-control settings-input" name="microphone-select" id="microphone-select"></select>
           </p>
+          <div class="settings-field settings-collapsable remove-on-broadcast remove-on-setup" style="padding-bottom: 1rem">
+            <p class="centered status-field">Supported Constraints</p>
+            <table class="table">
+              <thead>
+                <tr>
+                  <td class="table-entry">Resolution</td>
+                  <td class="table-entry">Framerate</td>
+                  <td class="table-entry">Bitrate (Kbps)</td>
+                  <td class="table-entry">Is Supported</td>
+                  <td class="table-entry">Use in Transcoder (3)</td>
+                </tr>
+              </thead>
+              <tbody id="res-container"></tbody>
+            </table>
+            <div>
+              <button id="post-button" class="ui-button">Post Transcode Variants</button>
+            </div>
+          </div>
           <p id="publisher-mute-controls" class="publisher-mute-controls hidden">
             <label for="video-check">Video: </label>
             <input type="checkbox" id="video-check" name="video-check" checked>
@@ -83,7 +102,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
             <input type="checkbox" id="audio-check" name="audio-check" checked>
           </p>
           <p id="publisher-name-field" class="publisher-name-field hidden"></p>
-          <div class="remove-on-broadcast">
+          <div class="remove-on-broadcast remove-on-transcode">
             <button id="join-button" class="ui-button">Join!</button>
           </div>
         </div>

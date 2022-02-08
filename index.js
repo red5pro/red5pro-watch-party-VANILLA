@@ -29,6 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var isPublishing = false;
   var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
   var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
+  var isTranscode = window.getParameterByName('transcode') && window.getParameterByName('transcode') === 'true'
 
   var serverSettings = (function() {
     var settings = sessionStorage.getItem('r5proServerSettings');
@@ -62,6 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
   var socketEndpoint = window.query('socket') || 'localhost';
   var hostEndpoint = window.getParameterByName('host');
+
   configuration.host = hostEndpoint || configuration.host
   
   var roomField = document.getElementById('room-field');
@@ -75,6 +77,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var audioCheck = document.getElementById('audio-check');
   var videoCheck = document.getElementById('video-check');
   var joinButton = document.getElementById('join-button');
+  var postProvisionButton = document.getElementById('post-button');
   var statisticsField = document.getElementById('statistics-field');
   var bitrateField = document.getElementById('bitrate-field');
   var packetsField = document.getElementById('packets-field');
@@ -89,6 +92,39 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var forceClosed = false;
   var PACKETS_OUT_TIME_LIMIT = 5000;
   var packetsOutTimeout = 0;
+
+  const STATE_TRANSCODE = 1
+  const STATE_SETUP = 2
+  const STATE_IS_PUBLISHING = 3
+  const setState = state => {
+    switch (state) {
+      case STATE_TRANSCODE:
+        Array.prototype.slice.call(document.querySelectorAll('.remove-on-transcode')).forEach(el => el.classList.add('hidden'))
+        window.registerProvisionCallback(handleProvisionChange)
+        postProvisionButton.addEventListener('click', handlePostProvisions, true)
+        break;
+      case STATE_SETUP:
+        Array.prototype.slice.call(document.querySelectorAll('.remove-on-transcode')).forEach(el => el.classList.remove('hidden'))
+        Array.prototype.slice.call(document.querySelectorAll('.remove-on-setup')).forEach(el => el.classList.add('hidden'))
+        if (isTranscode) {
+          document.querySelector('#camera-select').disabled = true
+          document.querySelector('#microphone-select').disabled = true
+        }
+        break;
+      case STATE_IS_PUBLISHING:
+        createMainVideo()
+        updateInitialMediaOnPublisher()
+        break;
+    }
+  }
+
+  let selectedProvisions = []
+  const handleProvisionChange = (list) => {
+    selectedProvisions = list
+  }
+  const handlePostProvisions = async () => {
+    console.log('POST', selectedProvisions)
+  }
 
   function notifyOfPublishFailure () {
     const al = document.querySelector('.alert')
@@ -282,6 +318,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
     catch (e) {
     }
+    setState(STATE_IS_PUBLISHING)
   }
   function onUnpublishFail (message) {
     isPublishing = false;
@@ -474,8 +511,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       await targetPublisher.publish(name)
 
       onPublishSuccess(targetPublisher)
-      createMainVideo()
-      updateInitialMediaOnPublisher()
     } catch (error) {
       var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
       console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
@@ -505,6 +540,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   // Kick off.
+  if (isTranscode) {
+    setState(STATE_TRANSCODE)
+  } else {
+    setState(STATE_SETUP)
+  }
   startPreview()
 
   var shuttingDown = false;

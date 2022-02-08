@@ -26,10 +26,146 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 (function (window, navigator, red5prosdk) { // eslint-disable-line no-unused-vars
   'use strict';
 
+  var isTranscode = window.getParameterByName('transcode') && window.getParameterByName('transcode') === 'true'
+
   var callback;
+  var provisionCallback;
   var mediaConstraints;
   var cameraSelect = document.getElementById('camera-select');
   var microphoneSelect = document.getElementById('microphone-select');
+  var resContainer = document.getElementById('res-container');
+  var selectedResolutions = []
+
+  // List of default HD resolutions. Used in determining browser support for Camera.
+  var hd = [
+    {width: 160, height: 120, frameRate: 15, bandwidth: 256, media: undefined},
+    {width: 320, height: 240, frameRate: 15, bandwidth: 256, media: undefined},
+    {width: 640, height: 360, frameRate: 15, bandwidth: 512, media: undefined},
+    {width: 640, height: 480, frameRate: 15, bandwidth: 512, media: undefined},
+    {width: 854, height: 480, frameRate: 15, bandwidth: 750, media: undefined},
+    {width: 1280, height: 720, frameRate: 30, bandwidth: 1500, media: undefined},
+    {width: 1920, height: 1080, frameRate: 30, bandwidth: 3000, media: undefined},
+    {width: 3840, height: 2160, frameRate: 30, bandwidth: 4500, media: undefined}
+  ];
+
+  const onTranscodeSelect = el => {
+    const id = parseInt(el.currentTarget.value, 10)
+    if (el.currentTarget.checked) {
+      if (selectedResolutions.length === 3) {
+        const reject = selectedResolutions.pop()
+        document.querySelector(`input[value="${hd.findIndex(o => o === reject)}"]`).checked = false
+      }
+      selectedResolutions.push(hd[id])
+    } else {
+      const index = selectedResolutions.findIndex(o => o === hd[id])
+      if (index > -1) {
+        selectedResolutions.splice(index, 1)
+      }
+    }
+    let indices = selectedResolutions.map(r => hd.indexOf(r)).sort().reverse()
+    selectedResolutions = indices.map(i => hd[i])
+    if (provisionCallback) {
+      provisionCallback(selectedResolutions)
+    }
+  }
+
+  function displayAvailableResolutions (deviceId, list) {
+    // Clear resolution selection UI.
+    while (resContainer.firstChild) {
+      resContainer.removeChild(resContainer.firstChild)
+    }
+    selectedResolutions = []
+    // UI builder for resolution option to select from.
+    var generateResOption = function(dim, index, enabled) {
+      var res = [dim.width, dim.height].join('x')
+      var framerate = dim.frameRate;
+      var bitrate = dim.bandwidth;
+      var tr = document.createElement('tr');
+      var resTD = document.createElement('td');
+      var frTD = document.createElement('td');
+      var bitrateTD = document.createElement('td');
+      var acceptedTD = document.createElement('td');
+      var transcodeTD = document.createElement('td');
+      var resText = document.createTextNode(res)
+      var ftText = document.createTextNode(framerate);
+      var bitrateText = document.createTextNode(bitrate);
+      var accText = document.createTextNode(enabled ? '✓' : '⨯');
+      var transcodeSelect = document.createElement('input')
+      transcodeSelect.type = 'checkbox'
+      transcodeSelect.value = index
+      transcodeSelect.classList.add('transcode-select')
+
+      tr.id = 'dimension-' + index;
+      tr.classList.add('settings-control');
+      tr.appendChild(resTD);
+      tr.appendChild(frTD);
+      tr.appendChild(bitrateTD);
+      tr.appendChild(acceptedTD);
+      tr.appendChild(transcodeTD);
+      tr.classList.add('table-row');
+      if (!enabled) {
+        tr.classList.add('table-row-disabled');
+      }
+      resTD.appendChild(resText);
+      frTD.appendChild(ftText);
+      bitrateTD.appendChild(bitrateText);
+      acceptedTD.appendChild(accText);
+      transcodeTD.appendChild(transcodeSelect);
+      [resTD, frTD, bitrateTD, acceptedTD, transcodeTD].forEach(function (td) {
+        td.classList.add('table-entry');
+      });
+      if (enabled) {
+        transcodeSelect.addEventListener('click', onTranscodeSelect, true);
+      }
+      return tr;
+    }
+    return new Promise(function (resolve) {
+      // For each HD listing, check if resolution is supported in the browser and 
+      //  add to selection UI if available.
+      var checkValid = function (index) {
+        var dim = list[index];
+        var constraints = {
+          audio:false, 
+          video: {
+            width: { exact: dim.width },
+            height: { exact: dim.height },
+            //            frameRate: { exact: dim.frameRate },
+            deviceId: deviceId
+          }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(function (media) {
+            // If resolution supported, generate UI entry and add event listener for selection.
+            if (dim.media) {
+              dim.media.getVideoTracks().forEach(function (track) {
+                track.stop();
+              });
+            }
+            dim.media = media;
+            resContainer.appendChild(generateResOption(dim, index, true))
+            //            selectResolutionForBroadcast(dim, index);
+            if (index === list.length - 1) {
+              resolve();
+            } else {
+              checkValid(++index);
+            }
+          })
+          .catch(function (error) {
+            console.log(error.name + ':: ' + JSON.stringify(dim));
+            resContainer.appendChild(generateResOption(dim, index, false))
+            resContainer.firstChild.firstChild.setAttribute('checked', 'checked')
+            if (index === list.length - 1) {
+              resolve();
+            } else {
+              checkValid(++index);
+            }
+          });
+      };
+
+      checkValid(0);
+    });
+  }
 
   function updateMediaStreamTrack (constraints, trackKind, callback, element) {
     navigator.mediaDevices.getUserMedia(constraints)
@@ -53,6 +189,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       };
     }
     updateMediaStreamTrack(newConstraints, 'video', callback, element);
+    if (isTranscode) {
+      displayAvailableResolutions(camera, hd)
+    }
   }
 
   function onMicrophoneSelect (microphone, constraints, callback, element) {
@@ -78,6 +217,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
     if (i > -1) {
       cameraSelect.selectedIndex = i;
+      if (isTranscode) {
+        displayAvailableResolutions(deviceList[i].deviceId, hd)
+      }
     }
   }
 
@@ -149,5 +291,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     mediaConstraints = constraints;
     beginMediaMonitor(mediaStream, callback, mediaConstraints, viewElement);
   }
+  window.registerProvisionCallback = callback => provisionCallback = callback
 
 })(window, navigator, window.red5prosdk);
