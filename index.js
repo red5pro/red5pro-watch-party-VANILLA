@@ -29,6 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var isPublishing = false;
   var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
   var isSM = window.getParameterByName('sm') && window.getParameterByName('sm') === 'true'
+  var smToken = window.getParameterByName('smToken') || 'xyz123'
   var isTranscode = window.getParameterByName('transcode') && window.getParameterByName('transcode') === 'true'
 
   var serverSettings = (function() {
@@ -109,6 +110,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (isTranscode) {
           document.querySelector('#camera-select').disabled = true
           document.querySelector('#microphone-select').disabled = true
+          document.querySelector('#room-field').disabled = true
+          document.querySelector('#streamname-field').disabled = true
         }
         break;
       case STATE_IS_PUBLISHING:
@@ -118,23 +121,68 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
 
+  let transcoderPOST = {
+    meta: {
+      authentication: {
+        username: '',
+        password: '',
+        token: undefined
+      },
+      stream: [],
+      georules: {
+        regions: ['US', 'UK'],
+        restricted: false
+      },
+      qos: 3
+    }
+  }
   let selectedProvisions = []
   const handleProvisionChange = (list) => {
     selectedProvisions = list
   }
   const handlePostProvisions = async () => {
-    console.log('POST', selectedProvisions)
+    const host = configuration.host
+    const name = streamNameField.value
+    const room = roomField.value
+    transcoderPOST.stream = selectedProvisions.map((res, index) => {
+      return {
+        level: index+1,
+        name: `${name}_${index+1}`,
+        properties: {
+          videoBR: res.bandwidth * 1000,
+          videoWidth: res.width,
+          videoHeight: res.height
+        }
+      }
+    }).reverse()
+    try {
+      console.log('POST', transcoderPOST)
+      const payload = await window.streamManagerUtil.postTranscode(host, `live/${room}`, `${name}_1`, transcoderPOST, smToken)
+      console.log('PYALOAD', payload)
+    } catch (e) {
+      console.error(e)
+      if (/Provision already exists/.exec(e.message)) {
+        //       transcoderManifest = streams
+      } else {
+        showErrorAlert(e.message)
+      }
+    }
   }
 
-  function notifyOfPublishFailure () {
+  function showErrorAlert (message) {
     const al = document.querySelector('.alert')
     const msg = al.querySelector('.alert-message')
     const submit = al.querySelector('#alert-submit')
-    msg.innerText = 'There seems to be an issue with broadcasting your stream. Please reload this page and join again.'
+    msg.innerText = message
     al.classList.remove('hidden')
     submit.addEventListener('click', () => {
       al.classList.add('hidden')
     })
+    window.scrollTo(0, 0)
+  }
+
+  function notifyOfPublishFailure () {
+    showErrorAlert('There seems to be an issue with broadcasting your stream. Please reload this page and join again.')
   }
 
   function startPublishTimeout () {
@@ -485,12 +533,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         video: 256
       },
       app: `live/${room}`,
-      streamName: name
+      streamName: isTranscode ? `${name}_1` : name
     });
 
     if (isSM) {
       let connectionParams = rtcConfig.connectionParams ? rtcConfig.connectionParams: {}
-      const payload = await window.streamManagerUtil.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName)
+      const payload = await window.streamManagerUtil.getOrigin(rtcConfig.host, rtcConfig.app, rtcConfig.streamName, isTranscode)
       const { scope, serverAddress } = payload
       rtcConfig = {...rtcConfig, ...{
         app: 'streammanager',
