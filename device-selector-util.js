@@ -105,6 +105,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       tr.classList.add('table-row');
       if (!enabled) {
         tr.classList.add('table-row-disabled');
+        transcodeSelect.disabled = true
       }
       resTD.appendChild(resText);
       frTD.appendChild(ftText);

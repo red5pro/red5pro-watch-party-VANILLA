@@ -559,7 +559,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     const constraints = {
       audio: true,
       video: {
-        deviceId,
+        deviceId: { exact: deviceId },
         width: { exact: videoWidth },
         height: { exact: videoHeight },
         frameRate: { exact: framerate }
@@ -571,7 +571,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     try {
       stream = await navigator.mediaDevices.getUserMedia(constraints)
     } catch (e) {
-      showErrorAlert(e.message)
+      showErrorAlert(e.message.length === 0 ? e.name : e.message)
+      setState(STATE_TRANSCODE)
       return
     }
     mediaStream = stream

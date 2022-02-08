@@ -298,6 +298,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (this.subscriber) {
       this.subscriber.off('*', this.respond);
       this.subscriber.unsubscribe().then(cleanup).catch(cleanup);
+    } else {
+      try { cleanup() } catch (e) {}
     }
     if (this.audioDecoy) {
       removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
