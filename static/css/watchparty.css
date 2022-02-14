@@ -55,16 +55,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   flex-grow: 1;
   display: flex;
   flex-direction: column-reverse;
-  align-items: stretch; /* this may be removable */
-  /*justify-content: space-around;*/
-  /*height: 100%;*/
+  align-items: stretch; 
 }
 
 .bottom-viewers {
   flex-grow: 1;
   display: flex;
   flex-direction: row-reverse;
-  /*max-height: calc(100vh / 4);*/
 }
 
 .subscribers {
@@ -89,13 +86,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   align-items: stretch;
   background-color: #222;
 }
-
-/*.subscribers {
-  display: flex;
-  flex-direction: row;
-  flex-flow: wrap;
-  justify-content: center;
-}*/
 
 .publisher-name-field, .subscriber-name-field {
   text-align: center;
