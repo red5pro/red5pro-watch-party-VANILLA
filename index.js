@@ -340,7 +340,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var wsProtocol = isSecure ? 'wss' : 'ws'
     // var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
-    var url = `wss://demo-live.red5.net:8443?room=${roomName}&streamName=${streamName}`
+    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
@@ -371,7 +371,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     mainVideo.init({
       protocol: 'wss',
       port: 443,
-      host: 'demo-live.red5.net',
+      host: 'your-host-here',
       app: 'live',
       streamName: 'demo-stream',
       rtcConfiguration: {

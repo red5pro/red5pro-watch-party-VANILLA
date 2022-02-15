@@ -61,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     function assignStorage () {
       json = {
         "version": build_version,
-        "host": 'demo-live.red5.net',
+        "host": 'your-host-here',
         "port": 5080,
         "stream1": "stream1",
         "stream2": "stream2",
