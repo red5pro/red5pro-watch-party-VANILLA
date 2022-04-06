@@ -86,6 +86,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var PACKETS_OUT_TIME_LIMIT = 5000;
   var packetsOutTimeout = 0;
 
+  const getRandomBetween = (min, max) => Math.floor(Math.random() * (max - min) + min)
+  const RETRY_DELAY = (30 + getRandomBetween(10, 60)) * 100
+  let retryTimeout
+  const retry = () => {
+    clearTimeout(retryTimeout)
+    retryTimeout = setTimeout(() => {
+      console.log('Retrying playback of main video.', RETRY_DELAY)
+      clearTimeout(retryTimeout)
+      createMainVideo()
+    }, RETRY_DELAY)
+  }
+
   function notifyOfPublishFailure () {
     const al = document.querySelector('.alert')
     const msg = al.querySelector('.alert-message')
@@ -352,19 +364,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function createMainVideo () {
 
-    const retry = () => {
-      var t = setTimeout(() => {
-        console.log('Retrying playback of main video.')
-        clearTimeout(t)
-        createMainVideo()
-      }, 1000)
-    }
-
     var mainVideo = new red5prosdk.RTCSubscriber();
     mainVideo.on('*', event => {
       if (event.type === 'Subscribe.Time.Update') return
       console.log('DEMO', `demo event: ${event.type}.`)
       if (event.type === 'Subscribe.Connection.Closed') {
+        retry()
+      } else if (event.type === 'Subscribe.Play.Unpublish') {
         retry()
       }
     })
