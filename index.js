@@ -90,6 +90,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var PACKETS_OUT_TIME_LIMIT = 5000;
   var packetsOutTimeout = 0;
 
+  const getRandomBetween = (min, max) => Math.floor(Math.random() * (max - min) + min)
+  const RETRY_DELAY = (30 + getRandomBetween(10, 60)) * 100
+  let retryTimeout
+  const retry = () => {
+    clearTimeout(retryTimeout)
+    retryTimeout = setTimeout(() => {
+      console.log('Retrying playback of main video.', RETRY_DELAY)
+      clearTimeout(retryTimeout)
+      createMainVideo()
+    }, RETRY_DELAY)
+  }
+
   function notifyOfPublishFailure () {
     const al = document.querySelector('.alert')
     const msg = al.querySelector('.alert-message')
@@ -344,7 +356,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var wsProtocol = isSecure ? 'wss' : 'ws'
     // var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
-    var url = `wss://demo-live.red5.net:8443?room=${roomName}&streamName=${streamName}`
+    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
