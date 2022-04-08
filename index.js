@@ -196,6 +196,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
 
+	const getRandomBetween = (min, max) => Math.floor(Math.random() * (max - min) + min)
+  const RETRY_DELAY = (30 + getRandomBetween(10, 60)) * 100
+  let retryTimeout
+  const retry = () => {
+    clearTimeout(retryTimeout)
+    retryTimeout = setTimeout(() => {
+      console.log('Retrying playback of main video.', RETRY_DELAY)
+      clearTimeout(retryTimeout)
+      createMainVideo()
+    }, RETRY_DELAY)
+	}
+
   function showErrorAlert (message) {
     const al = document.querySelector('.alert')
     const msg = al.querySelector('.alert-message')
@@ -454,7 +466,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var wsProtocol = isSecure ? 'wss' : 'ws'
     // var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
-    var url = `wss://demo-live.red5.net:8443?room=${roomName}&streamName=${streamName}`
+    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
@@ -465,50 +477,41 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   const createMainVideo = async () => {
-
-    const retry = () => {
-      var t = setTimeout(() => {
-        console.log('Retrying playback of main video.')
-        clearTimeout(t)
-        createMainVideo()
-      }, 1000)
-    }
-
-    try {
-
-      let config = {
-        protocol: 'wss',
-        port: 443,
-        host: 'demo-live.red5.net',
-        app: 'live',
-        streamName: 'demo-stream',
-        mediaElementId: 'red5pro-mainVideoView',
-        subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
+    var mainVideo = new red5prosdk.RTCSubscriber();
+    mainVideo.on('*', event => {
+      if (event.type === 'Subscribe.Time.Update') return
+      console.log('DEMO', `demo event: ${event.type}.`)
+      if (event.type === 'Subscribe.Connection.Closed') {
+        retry()
+      } else if (event.type === 'Subscribe.Play.Unpublish') {
+        retry()
       }
-      /* No Stream Manager support for main video.
-      if (isSM) {
-        const payload = await window.streamManagerUtil.getEdge('demo-live.red5.net', 'live', 'demo-stream_3')
-        const { scope, serverAddress } = payload
-        config = {...config, ...{
-          app: 'streammanager',
-          connectionParams: {
-            host: serverAddress,
-            app: scope
-          }
-        }}
-      }
-      */
-      var mainVideo = new red5prosdk.RTCSubscriber();
-      mainVideo.on('*', event => {
-        if (event.type === 'Subscribe.Time.Update') return
-        console.log('DEMO', `demo event: ${event.type}.`)
-        if (event.type === 'Subscribe.Connection.Closed') {
-          retry()
-        }
-      })
-      await mainVideo.init(config)
-      await mainVideo.subscribe()
-    } catch (e) {
+    })
+    mainVideo.init({
+      protocol: 'wss',
+      port: 443,
+      host: 'your-host-here',
+      app: 'live',
+      streamName: 'demo-stream',
+      rtcConfiguration: {
+        iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
+        iceCandidatePoolSize: 2,
+        bundlePolicy: 'max-bundle'
+      }, // See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#RTCConfiguration_dictionary
+      mediaElementId: 'red5pro-mainVideoView',
+      subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16),
+      videoEncoding: 'NONE',
+      audioEncoding: 'NONE',
+    })
+    .then(function(mainVideo) {
+      return mainVideo.subscribe();
+    })
+    .then(function(mainVideo) {
+      // subscription is complete.
+      // playback should begin immediately due to
+      //   declaration of `autoplay` on the `video` element.
+    })
+    .catch(function(error) {
       console.error(error)
       retry()
     }
