@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 
 .program {
-  width: calc(100vw - (100vw / 2.5));
+  width: calc(100vw - (100vw / 3));
   height: calc(100vh - 54px);
   text-align: center;
   background-color: #222;
@@ -74,7 +74,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   flex-direction: row;
   flex-wrap: wrap;
   align-content: baseline;
-  width: calc(100vw / 2.5);
+  width: calc(100vw / 3);
   background-color: #222;
 }
 
@@ -235,19 +235,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 .video-card {
-  width: calc((100vw / 2.5) * 0.5);
+  width: calc((100vw / 3) * 0.5);
   height: calc((100vh / 4) - 54px);
   display: flex;
+  flex-direction: column;
   position: relative;
 }
 
+.name-field {
+  color: white;
+  text-align: center;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/*
+ * 24px = height of name-field
+ */
 .video-holder {
   width: 100%;
+  height: calc(100% - 24px);
 }
 
 .red5pro-publisher {
-  max-width: calc((100vw / 2.5) * 0.5);
-  max-height: calc((100vh / 4) - 54px);
   object-fit: contain;
 }
 
