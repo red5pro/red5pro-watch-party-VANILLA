@@ -341,7 +341,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     tray.appendChild(div)
     pubView.classList.add('red5pro-publisher')
 
-    // publisherNameField.innerText = streamName;
+    publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
     //publisherNameField.classList.remove('hidden');
@@ -387,6 +387,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         retry()
       }
     })
+
     mainVideo.init({
       protocol: 'wss',
       port: 443,
@@ -415,6 +416,52 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       // A fault occurred while trying to initialize and playback the stream.
       console.error(error)
       retry()
+    }
+  }
+
+  const startPreview = async () => {
+    const element = document.querySelector('#red5pro-publisher')
+    const constraints = {
+      audio: true,
+      video: {
+        width: {
+          ideal: 320
+        },
+        height: {
+          ideal: 240
+        }
+      }
+    }
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
+      document.querySelector('#red5pro-publisher').srcObject = mediaStream
+      window.allowMediaStreamSwap(element, constraints, mediaStream, activeStream => {
+        mediaStream = activeStream
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const determinePublisher = async (mediaStream, room, name) => {
+
+    let config = Object.assign({},
+      configuration,
+      {
+        streamMode: configuration.recordBroadcast ? 'record' : 'live'
+      },
+      getAuthenticationParams(),
+      getUserMediaConfiguration());
+
+    let rtcConfig = Object.assign({}, config, {
+      protocol: getSocketLocationFromProtocol().protocol,
+      port: getSocketLocationFromProtocol().port,
+      bandwidth: {
+        video: 256
+      },
+      app: `live/${room}`,
+      streamName: name
+>>>>>>> 32acc89 (update to layout of viewers.)
     });
 
   }
@@ -613,22 +660,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     });
     relayout()
 
+    var baseSubscriberConfig = Object.assign({},
+      configuration,
+      {
+        protocol: getSocketLocationFromProtocol().protocol,
+        port: getSocketLocationFromProtocol().port
+      },
+      getAuthenticationParams(), 
+      {
+        app: `live/${roomName}`
+    });
     var i, length = subscribers.length - 1;
+    /*
     var sub;
     for(i = 0; i < length; i++) {
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
+    */
     if (subscribers.length > 0) {
-      var baseSubscriberConfig = Object.assign({},
-                                  configuration,
-                                  {
-                                    protocol: getSocketLocationFromProtocol().protocol,
-                                    port: getSocketLocationFromProtocol().port
-                                  },
-                                  getAuthenticationParams(),
-                                  getUserMediaConfiguration());
-      subscribers[0].execute(baseSubscriberConfig);
+      //subscribers[0].execute(baseSubscriberConfig);
+      subscribers.forEach(sub => {
+        sub.execute(baseSubscriberConfig)
+      })
     }
   }
 
