@@ -163,7 +163,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
-  var isSecure = protocol === 'https'//true; //protocol == 'https';
+  var isSecure = true; //protocol == 'https';
 
   function saveSettings () {
     streamName = streamNameField.value;
@@ -366,10 +366,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
-    var wsProtocol = 'ws'// isSecure ? 'wss' : 'ws'
-    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
+    var wsProtocol = isSecure ? 'wss' : 'ws'
+    // var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
-    //    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
+    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
