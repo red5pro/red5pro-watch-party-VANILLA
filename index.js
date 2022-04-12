@@ -345,7 +345,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     tray.appendChild(div)
     pubView.classList.add('red5pro-publisher')
 
-    // publisherNameField.innerText = streamName;
+    publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
     //publisherNameField.classList.remove('hidden');
@@ -394,7 +394,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       let config = {
         protocol: 'wss',
         port: 443,
-        host: 'demo-live.red5.net', //'your-host-here'
+        host: 'your-host-here',
         app: 'live',
         streamName: 'demo-stream',
         mediaElementId: 'red5pro-mainVideoView',
@@ -435,13 +435,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       audio: true,
       video: {
         width: {
-          exact: 320
+          ideal: 320
         },
         height: {
-          exact: 240
-        },
-        frameRate: {
-          exact: 15
+          ideal: 240
         }
       }
     }
@@ -639,24 +636,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     });
     relayout()
 
+    var baseSubscriberConfig = Object.assign({},
+      configuration,
+      {
+        protocol: getSocketLocationFromProtocol().protocol,
+        port: getSocketLocationFromProtocol().port
+      },
+      getAuthenticationParams(), 
+      {
+        app: `live/${roomName}`
+    });
     var i, length = subscribers.length - 1;
+    /*
     var sub;
     for(i = 0; i < length; i++) {
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
+    */
     if (subscribers.length > 0) {
-      var baseSubscriberConfig = Object.assign({},
-        configuration,
-        {
-          protocol: getSocketLocationFromProtocol().protocol,
-          port: getSocketLocationFromProtocol().port
-        },
-        getAuthenticationParams(), 
-        {
-          app: `live/${roomName}`
-        });
-      subscribers[0].execute(baseSubscriberConfig);
+      //subscribers[0].execute(baseSubscriberConfig);
+      subscribers.forEach(sub => {
+        sub.execute(baseSubscriberConfig)
+      })
     }
   }
 
