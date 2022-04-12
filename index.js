@@ -329,10 +329,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     const tray = document.querySelector('.side-viewers')
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
-    tray.appendChild(pubView)
+    const div = document.createElement('div')
+    const nameField = document.createElement('div')
+    const videoHolder = document.createElement('div')
+    const p = document.createElement('p')
+    const t = document.createTextNode(streamName)
+    div.classList.add('video-card')
+    videoHolder.classList.add('video-holder')
+    p.classList.add('name-field')
+    p.appendChild(t)
+    nameField.appendChild(p)
+    div.appendChild(nameField)
+    div.appendChild(videoHolder)
+    videoHolder.appendChild(pubView)
+    tray.appendChild(div)
     pubView.classList.add('red5pro-publisher')
 
-    publisherNameField.innerText = streamName;
+    // publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
     //publisherNameField.classList.remove('hidden');
@@ -381,7 +394,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       let config = {
         protocol: 'wss',
         port: 443,
-        host: 'demo-live.red5.net',
+        host: 'demo-live.red5.net', //'your-host-here'
         app: 'live',
         streamName: 'demo-stream',
         mediaElementId: 'red5pro-mainVideoView',
@@ -411,7 +424,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       await mainVideo.init(config)
       await mainVideo.subscribe()
     } catch (e) {
-      console.error(error)
+      console.error(e)
       retry()
     }
   }

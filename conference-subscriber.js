@@ -43,7 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
   var subscriberTemplate = '' +
         '<div>' +
-          '<p class="debug' + ((isDebug) ? '' : 'hidden') + '"></p>' +
+          '<p class="name-field"></p>' +
         '</div>' +
         '<div class="subscriber-session hidden">' +
           '<p class="subscriber-status-field">On hold.</p>' +
@@ -169,8 +169,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
-    if (this.card.querySelector('.debug')) {
-      this.card.querySelector('.debug').innerText = this.streamName
+    if (this.card.querySelector('.name-field')) {
+      this.card.querySelector('.name-field').innerText = this.streamName
     }
 
     //    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
