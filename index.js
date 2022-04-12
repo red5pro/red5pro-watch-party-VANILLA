@@ -163,7 +163,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
-  var isSecure = true; //protocol == 'https';
+  var isSecure = protocol === 'https'//true; //protocol == 'https';
 
   function saveSettings () {
     streamName = streamNameField.value;
@@ -326,7 +326,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function setPublishingUI (streamName) {
-    const tray = document.querySelector('.bottom-viewers')
+    const tray = document.querySelector('.side-viewers')
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
     tray.appendChild(pubView)
@@ -353,10 +353,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
-    var wsProtocol = isSecure ? 'wss' : 'ws'
-    // var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
+    var wsProtocol = 'ws'// isSecure ? 'wss' : 'ws'
+    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
-    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
+    //    var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
@@ -537,12 +537,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.addEventListener('pagehide', shutdown);
 
   var streamsList = [];
-  const bottomRowLimit = 4;
+  const bottomRowLimit = 0;
   //var subscribersEl = document.getElementById('subscribers');
   //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
   //for(j = 2; j < 9; j++){ //tab everything below over 1 tab
   var bottomSubscribersEl = document.getElementById('bottomViewers');
-  var sideSubscribersEl = document.getElementById('sideViewers');
+  var sideSubscribersEl = document.querySelector('.side-viewers');
 
   function positionExisting (list) {
     list.forEach((name, index) => {

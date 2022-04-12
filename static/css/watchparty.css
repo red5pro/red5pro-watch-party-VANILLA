@@ -34,19 +34,36 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   top: 0;
   bottom: 0;
   right: 0;
-  lefT: 0;
+  left: 0;
+  background-color: #222;
+}
+
+.topbar {
+  width: 100%;
+  height: 54px;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: 500;
+  font-size: 20px;
+  padding: 14px;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.topbar-item > img {
+  margin-top: 10px;
+  height: 48px;
 }
 
 .program-container {
   display: flex;
   flex-direction: row;
-  flex-grow: 3;
-  max-height: calc(100vh - (100vh / 4));
 }
 
 .program {
-  width: calc(100vw - (100vw / 5));
-  height: calc(100vh - (100vh / 4));
+  width: calc(100vw - (100vw / 2.5));
+  height: calc(100vh - 54px);
   text-align: center;
   background-color: #222;
 }
@@ -54,8 +71,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .side-viewers {
   flex-grow: 1;
   display: flex;
-  flex-direction: column-reverse;
-  align-items: stretch; 
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: baseline;
+  width: calc(100vw / 2.5);
+  background-color: #222;
 }
 
 .bottom-viewers {
@@ -120,10 +140,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .spaced {
   margin: 1em;
 }
-.video-holder {
-  width: 100%;
-  height: 100%;
-}
+
 .publisher-container, .subscriber-container {
   width: 100%;
   background-color: #000;
@@ -210,15 +227,40 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   transform: scaleX(-1);
 }
 
+/*
+.video-holder {
+  max-width: calc((100vw / 3) * 0.5);
+  max-height: calc((100vh / 4) - 54px);
+}
+*/
+
+.video-card {
+  width: calc((100vw / 2.5) * 0.5);
+  height: calc((100vh / 4) - 54px);
+  display: flex;
+  position: relative;
+}
+
+.video-holder {
+  width: 100%;
+}
+
 .red5pro-publisher {
-  max-width: calc(100vw / 5);
-  max-height: calc(100vh / 4);
+  max-width: calc((100vw / 2.5) * 0.5);
+  max-height: calc((100vh / 4) - 54px);
+  object-fit: contain;
 }
 
 .red5pro-subscriber {
-  width: calc(100vw / 5);
-  height: calc(100vh / 4);
+  object-fit: contain;
 }
+
+/*
+.red5pro-subscriber {
+  max-width: calc((100vw / 3) * 0.5);
+  max-height: calc((100vh / 4) - 54px);
+}
+*/
 
 .red5pro-subscriber-full {
   width: unset;

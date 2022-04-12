@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           '<p class="subscriber-status-field">On hold.</p>' +
         '</div>' +
         '<div class="video-holder">' +
-          '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
+          '<video muted autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
         '</div>' +
         '<div class="audio-holder centered hidden">' +
           '<audio autoplay playsinline class="red5pro-media"></audio>' +
@@ -111,7 +111,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     videoElement.id = videoId;
     audioElement.id = audioId;
     card.id = getSubscriberElementContainerId(streamName);
-    card.style.position = 'relative'
+    //    card.style.position = 'relative'
+    card.classList.add('video-card')
     return card;
   }
 
