@@ -28,6 +28,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/script/testbed-config.js"></script>
     <script src="static/script/red5pro-utils.js"></script>
     <script src="static/script/reachability.js"></script>
+    <script src="static/lib/face-api/face-api.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <link rel="stylesheet" href="static/css/reset.css">
     <link rel="stylesheet" href="static/css/testbed.css">
     <link rel="stylesheet" href="static/lib/red5pro/red5pro-media.css">
@@ -44,7 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
       <div class="topbar">
         <p class="topbar-item"><span>NABShow 2022</span></p><p class="topbar-item"><img src="static/assets/Red5Pro_logo.svg" alt="Red5 Pro"></p>
       </div>
-      <div id="publisher-container" class="publisher-section publisher-container remove-on-broadcast">
+      <div id="publisher-container" class="publisher-section publisher-container remove-on-broadcast" >
          <video id="red5pro-publisher"
             autoplay playsinline muted
             width="100%" height="100%">
@@ -129,6 +131,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/script/publisher-status.js"></script>
     <script src="conference-subscriber.js"></script>
     <script src="device-selector-util.js"></script>
+    <script src="kenth-detector.js"></script>
     <script src="index.js"></script>
   </body>
 </html>

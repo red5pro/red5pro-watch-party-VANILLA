@@ -26,9 +26,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * Handles generating and monitoring Subscribers for Conference example.
  */
-(function (window, document, red5prosdk) {
+(function (window, document, red5prosdk, faceapi) {
   'use strict';
-
+  
+  const regex = /ken/gi
   var isMoz = false;
   if (window.adapter) {
     isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
@@ -49,6 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         '</div>' +
         '<div class="video-holder">' +
           '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
+          '<canvas class="detect-canvas"></canvas>' +
         '</div>' +
         '<div class="audio-holder centered hidden">' +
           '<audio autoplay playsinline class="red5pro-media"></audio>' +
@@ -102,6 +104,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var videoId = getSubscriberElementId(streamName);
     var audioId = getSubscriberAudioElementId(streamName);
     var videoElement = card.getElementsByClassName('red5pro-media')[0];
+    var canvasElement = card.getElementsByClassName('detect-canvas')[0];
     var audioElement = card.getElementsByClassName('red5pro-media')[1];
     var subscriberNameField = card.getElementsByClassName('subscriber-name-field')[0];
     var subscriberIdField = card.getElementsByClassName('subscriber-id-field')[0];
@@ -112,6 +115,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     card.id = getSubscriberElementContainerId(streamName);
     //    card.style.position = 'relative'
     card.classList.add('video-card')
+    if (regex.exec(streamName)) {
+      window.doDetect(videoElement, canvasElement)
+    }
     return card;
   }
 
@@ -347,4 +353,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
 
-})(window, document, window.red5prosdk);
+})(window, document, window.red5prosdk, window.faceapi);

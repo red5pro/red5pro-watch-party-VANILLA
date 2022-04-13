@@ -295,3 +295,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   width: 100%;
   padding: 10px 0 20px 0;
 }
+
+.detect-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
