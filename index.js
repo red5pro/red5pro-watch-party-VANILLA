@@ -26,6 +26,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 (function(window, document, red5prosdk) {
   'use strict';
 
+  var regex = /ken/gi
   var isPublishing = false;
   var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
 
@@ -344,6 +345,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     tray.appendChild(div)
     pubView.classList.add('red5pro-publisher')
 
+    if (regex.exec(streamName)) {
+      const canvas = document.createElement('canvas')
+      canvas.classList.add('detect-canvas')
+      canvas.style.transform = 'scaleX(-1)'
+      videoHolder.appendChild(canvas)
+      window.doDetect(pubView, canvas, true)
+    }
+
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
@@ -352,6 +361,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
+    document.querySelector('.side-viewers').style.backgroundColor = 'black'
   }
 
   // eslint-disable-next-line no-unused-vars

@@ -3,7 +3,7 @@
   const drawCircle = (context, { x, y }) => {
     context.fillStyle = "#FF0000"
     context.beginPath()
-    context.arc(x, y + 4, 12, 0, 2 * Math.PI)
+    context.arc(x, y - 4, 12, 0, 2 * Math.PI)
     context.fill()
   }
 
@@ -26,22 +26,48 @@
   const inputSize = 224
   const scoreThreshold = 0.5
   const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold })
-  const doTrack = async (video, canvas) => {
-    if (!video.paused && !video.ended && video.currentTime > 2 && !!faceapi.nets.tinyFaceDetector.params) {
-      try {
-        const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks()
-        if (result) {
-          const nose = result.landmarks.getNose()
-          console.log('NOSE', nose)
-          const dims = faceapi.matchDimensions(canvas, video, true)
-          const resizedResult = faceapi.resizeResults(result, dims)
-          //faceapi.draw.drawDetections(canvas, resizedResult)
-          //faceapi.draw.drawFaceLandmarks(canvas, resizedResult)
+  const doTrack = async (video, canvas, flip) => {
+    //    console.log('detect', 'doTrack')
+    const rerun = () => {
+      //      console.log('detect', 'rerun')
+      let t = setTimeout(() => {
+        clearTimeout(t)
+        doTrack(video, canvas, flip)
+      }, 200)
+    }
 
-          drawCircle(canvas.getContext("2d"), nose[6])
-        }
+    let retry = setTimeout(() => {
+      console.log('detect', 'retry... may have stalled.')
+      clearTimeout(retry)
+      rerun()
+    }, 3000)
+    if (!video.paused && !video.ended && video.currentTime > 5 && !!faceapi.nets.tinyFaceDetector.params) {
+      try {
+        faceapi.detectSingleFace(video, options).withFaceLandmarks().then(result => {
+          //          console.log('detect', 'results')
+          clearTimeout(retry)
+          if (result) {
+            canvas.style.width = `${video.clientWidth}px`
+            canvas.style.height = `${video.clientHeight}px`
+            const nose = result.landmarks.getNose()
+            //          console.log('NOSE', nose)
+            const dims = faceapi.matchDimensions(canvas, video, true)
+            const resizedResult = faceapi.resizeResults(result, dims)
+            //faceapi.draw.drawDetections(canvas, resizedResult)
+            //faceapi.draw.drawFaceLandmarks(canvas, resizedResult)
+            let obj = nose[6]
+            drawCircle(canvas.getContext("2d"), obj)
+          }
+          rerun()
+        }).catch(e => {
+          clearTimeout(retry)
+          console.error(e)
+          rerun()
+        })
       } catch (e) {
+        clearTimeout(retry)
         console.error(e)
+        rerun()
       }
     }
     /*
@@ -55,10 +81,6 @@ faceapi.drawLandmarks('overlay', mtcnnResults.map(res => res.faceLandmarks), { l
       }
     }
     */
-    let t = setTimeout(() => {
-      clearTimeout(t)
-      doTrack(video, canvas)
-    }, 200)
   }
 
   (async () => {

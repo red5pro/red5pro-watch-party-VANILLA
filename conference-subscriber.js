@@ -26,7 +26,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * Handles generating and monitoring Subscribers for Conference example.
  */
-(function (window, document, red5prosdk, faceapi) {
+(function (window, document, red5prosdk) {
   'use strict';
   
   const regex = /ken/gi
@@ -353,4 +353,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
   }
 
-})(window, document, window.red5prosdk, window.faceapi);
+})(window, document, window.red5prosdk);
