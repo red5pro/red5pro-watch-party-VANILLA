@@ -361,13 +361,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
+    Array.prototype.forEach.call(document.getElementsByClassName('show-on-broadcast'), function (el) {
+      el.classList.remove('hidden');
+    });
     document.querySelector('.side-viewers').style.backgroundColor = 'black'
   }
 
   // eslint-disable-next-line no-unused-vars
   function updatePublishingUIOnStreamCount (streamCount) {
     /*if (streamCount > 0) {
-      publisherContainer.classList.remove('margin-center');
+      publisherContainer.classList
+      ('margin-center');
     } else {
       publisherContainer.classList.add('margin-center');
     }*/
@@ -376,7 +380,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
-    // var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
+    //    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
     var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
