@@ -23,6 +23,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     {{> header-scripts}}
     {{> header-stylesheets}}-->
     <title>Watch Party</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script>
     <script src="static/lib/screenfull/screenfull.min.js"></script>
     <script src="static/script/testbed-config.js"></script>
@@ -54,6 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
       <div id="publisher-container" class="publisher-section publisher-container remove-on-broadcast" >
          <video id="red5pro-publisher"
             autoplay playsinline muted
+            oncontextmenu="return false;"
             width="100%" height="100%">
          </video>
         <div class="settings-area remove-on-broadcast">
