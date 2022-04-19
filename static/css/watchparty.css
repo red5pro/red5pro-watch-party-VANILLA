@@ -77,13 +77,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .program-container {
   display: flex;
   flex-direction: row;
+  height: calc(100vh - 88px);
+  background-color: black;
 }
 
 .program {
   width: calc(100vw - (100vw / 3));
-  height: calc(100vh - 88px);
+  height: fit-content;
   text-align: center;
-  background-color: #222;
+  background-color: #000;
 }
 
 .side-viewers {
@@ -254,7 +256,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 .video-card {
   width: calc((100vw / 3) * 0.5);
-  height: calc((100vh / 4) - 14px);
+  height: calc((100vh / 4) - 22px);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -346,11 +348,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
  .program-container {
     flex-direction: column;
+    margin-top: 36px;
   } 
   .program {
     width: 100vw;
     height: unset;
-    min-height: 480px;
   }
   .side-viewers {
     width: 100vw;
