@@ -1,0 +1,7 @@
+{
+  "title": "Watch Party",
+  "webappName": "watchparty",
+  "webappSource": "./",
+  "buildCommand": "echo hello",
+  "webappOutput": "./"
+}
