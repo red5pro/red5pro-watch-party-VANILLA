@@ -333,7 +333,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   pointer-events: none;
 }
 
-@media (orientation: portrait) {
+@media (orientation: landscape) and (max-height: 500px) {
+  #red5pro-publisher {
+    max-height: 200px;
+  }
+}
+
+@media (orientation: portrait)  {
   .settings-input {
     max-width: 50%;
   }
