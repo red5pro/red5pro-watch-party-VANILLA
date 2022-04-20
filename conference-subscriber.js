@@ -117,6 +117,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     card.classList.add('video-card')
     if (regex.exec(streamName)) {
       window.doDetect(videoElement, canvasElement)
+    } else {
+      canvasElement.parentNode.removeChild(canvasElement)
     }
     return card;
   }
