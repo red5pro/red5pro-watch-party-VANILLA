@@ -32,6 +32,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var microphoneSelect = document.getElementById('microphone-select');
 
   function updateMediaStreamTrack (constraints, trackKind, callback, element) {
+    if (element.srcObject) {
+      element.srcObject.getTracks().forEach(t => t.stop())
+      element.srcObject = null
+    }
     navigator.mediaDevices.getUserMedia(constraints)
       .then(function (stream) {
         callback(stream)
