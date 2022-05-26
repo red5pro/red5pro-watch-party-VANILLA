@@ -421,14 +421,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     try {
 
       let config = {
-        protocol: 'wss',
-        port: 443,
+        protocol: isSecure ? 'wss' : 'ws',
+        port: isSecure ? 443 : 5080,
         host: 'your-host-here',
         app: 'live',
         streamName: 'demo-stream',
         mediaElementId: 'red5pro-mainVideoView',
         subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
       }
+      mainProgram.volume = 0.25
       var mainVideo = new red5prosdk.RTCSubscriber();
       mainVideo.on('*', event => {
         if (event.type === 'Subscribe.Time.Update') return
