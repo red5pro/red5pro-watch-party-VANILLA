@@ -18,6 +18,17 @@ NONINFRINGEMENT.   IN  NO  EVENT  SHALL INFRARED5, INC. BE LIABLE FOR ANY CLAIM,
 WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT  OF  OR  IN CONNECTION 
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+.red5pro-media-seektime-slider {
+  display: none!important;
+}
+
+#red5pro-publisher::-webkit-media-controls,
+#red5pro-publisher::-moz-media-controls,
+#red5pro-publisher::-o-media-controls,
+#red5pro-publisher::-ms-media-controls {
+  display: none!important;
+  opacity: 1 !important;
+}
 
 .debug {
   position: absolute;
@@ -34,28 +45,59 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   top: 0;
   bottom: 0;
   right: 0;
-  lefT: 0;
+  left: 0;
+  background-color: #222;
+}
+
+.topbar {
+  width: 100%;
+  height: 88px;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: 500;
+  font-size: 20px;
+  padding: 14px;
+  box-sizing: border-box;
+  align-items: center;
+  position: relative;
+}
+
+.tagline {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 32px;
+  left: 0;
+}
+
+.topbar-item > img {
+  margin-left: 10px;
+  margin-top: 10px;
+  height: 48px;
 }
 
 .program-container {
   display: flex;
   flex-direction: row;
-  flex-grow: 3;
-  max-height: calc(100vh - (100vh / 4));
+  height: calc(100vh - 88px);
+  background-color: black;
 }
 
 .program {
-  width: calc(100vw - (100vw / 5));
-  height: calc(100vh - (100vh / 4));
+  width: calc(100% - (100% / 3));
+  height: fit-content;
   text-align: center;
-  background-color: #222;
+  background-color: #000;
 }
 
 .side-viewers {
   flex-grow: 1;
   display: flex;
-  flex-direction: column-reverse;
-  align-items: stretch; 
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: baseline;
+  width: calc(100% / 3);
 }
 
 .bottom-viewers {
@@ -79,7 +121,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .viewer {
   flex-grow: 1;
   text-align: center;
-  max-width: calc(100vw / 5);
+  max-width: calc(100% / 5);
   height: calc(100vh / 4);
   display: flex;
   flex-direction: column-reverse;
@@ -120,11 +162,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .spaced {
   margin: 1em;
 }
-.video-holder {
-  width: 100%;
-  height: 100%;
-}
-.publisher-container, .subscriber-container {
+
+.publisher-container {
+    width: 100%;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    margin: 10px auto;
+ }
+
+.subscriber-container {
   width: 100%;
   background-color: #000;
   position: absolute;
@@ -210,14 +257,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   transform: scaleX(-1);
 }
 
+.video-card {
+  width: 50%;
+  height: calc((100vh / 4) - 22px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.name-field {
+  color: white;
+  text-align: center;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: black;
+}
+
+/*
+ * 24px = height of name-field
+ */
+.video-holder {
+  width: 100%;
+  height: calc(100% - 24px);
+}
+
 .red5pro-publisher {
-  max-width: calc(100vw / 5);
-  max-height: calc(100vh / 4);
+  object-fit: contain;
 }
 
 .red5pro-subscriber {
-  width: calc(100vw / 5);
-  height: calc(100vh / 4);
+  object-fit: contain;
 }
 
 .red5pro-subscriber-full {
@@ -254,4 +324,58 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .alert-message {
   width: 100%;
   padding: 10px 0 20px 0;
+}
+
+.detect-canvas {
+  position: absolute;
+  left: 0;
+  top: 24px;
+  pointer-events: none;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #red5pro-publisher {
+    max-height: 200px;
+  }
+}
+
+@media (orientation: portrait)  {
+  .settings-input {
+    max-width: 50%;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    height: unset;
+    justify-content: center;
+  }
+  .tagline {
+    top: unset;
+    bottom: -24px;
+  }
+  .publisher-section {
+    margin-top: 34px;  
+  }
+ .program-container {
+    flex-direction: column;
+    margin-top: 36px;
+    background-color: black;
+  } 
+  .program {
+    width: 100%;
+    height: unset;
+  }
+  .side-viewers {
+    width: 100%;
+  }
+  .video-card {
+    width: calc(100% * 0.5);
+    height: unset;
+  }
+  #red5pro-publisher {
+    max-height: calc(100vh - 500px);
+  }
+  .red5pro-media-volume-slider,
+  .red5pro-media-seektime-slider {
+    display: none!important;
+  }
 }

@@ -28,13 +28,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 (function (window, document, red5prosdk) {
   'use strict';
-
+  
+  const regex = /ken/gi
   var isMoz = false;
   if (window.adapter) {
     isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
   }
 
-  var isDebug = window.getParameterByName('debug')
+  var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
 
   var subscriberMap = {};
   var ConferenceSubscriberItemMap = {}
@@ -42,13 +43,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
   var subscriberTemplate = '' +
         '<div>' +
-          '<p class="debug' + ((isDebug) ? '' : 'hidden') + '"></p>' +
+          '<p class="name-field"></p>' +
         '</div>' +
         '<div class="subscriber-session hidden">' +
           '<p class="subscriber-status-field">On hold.</p>' +
         '</div>' +
         '<div class="video-holder">' +
           '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
+          '<canvas class="detect-canvas"></canvas>' +
         '</div>' +
         '<div class="audio-holder centered hidden">' +
           '<audio autoplay playsinline class="red5pro-media"></audio>' +
@@ -102,6 +104,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var videoId = getSubscriberElementId(streamName);
     var audioId = getSubscriberAudioElementId(streamName);
     var videoElement = card.getElementsByClassName('red5pro-media')[0];
+    var canvasElement = card.getElementsByClassName('detect-canvas')[0];
     var audioElement = card.getElementsByClassName('red5pro-media')[1];
     var subscriberNameField = card.getElementsByClassName('subscriber-name-field')[0];
     var subscriberIdField = card.getElementsByClassName('subscriber-id-field')[0];
@@ -110,7 +113,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     videoElement.id = videoId;
     audioElement.id = audioId;
     card.id = getSubscriberElementContainerId(streamName);
-    card.style.position = 'relative'
+    //    card.style.position = 'relative'
+    card.classList.add('video-card')
+    if (regex.exec(streamName)) {
+      window.doDetect(videoElement, canvasElement)
+    } else {
+      canvasElement.parentNode.removeChild(canvasElement)
+    }
     return card;
   }
 
@@ -167,8 +176,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
-    if (this.card.querySelector('.debug')) {
-      this.card.querySelector('.debug').innerText = this.streamName
+    if (this.card.querySelector('.name-field')) {
+      this.card.querySelector('.name-field').innerText = this.streamName
     }
 
     //    console.log('TEST', 'To UNdisposeDD ' + this.streamName)
@@ -218,7 +227,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (event.type === 'Subscribe.Time.Update') return;
 
     console.log('TEST', '[subscriber:' + this.streamName + '] ' + event.type);
-
     var inFailedState = updateSuscriberStatusFromEvent(event, this.statusField);
     if (event.type === 'Subscribe.Metadata') {
       if (event.data.streamingMode) {
@@ -302,7 +310,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
     }
   }
-  SubscriberItem.prototype.execute = function (config) {
+  SubscriberItem.prototype.execute = async function (config) {
     addLoadingIcon(this.card)
     this.unexpectedClose = true
 
@@ -316,19 +324,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                       mediaElementId: getSubscriberElementId(name)
     });
 
-    this.subscriber = new red5prosdk.RTCSubscriber();
-    this.subscriber.on('*',  (e) => this.respond(e));
+    try {
+      this.subscriber = new red5prosdk.RTCSubscriber()
+      this.subscriber.on('*',  (e) => this.respond(e))
 
-    this.subscriber.init(rtcConfig)
-      .then(function (subscriber) {
-        subscriberMap[name] = subscriber;
-        self.requestLayoutFn.call(null)
-        return subscriber.subscribe();
-      })
-      .catch(function (error) {
-        console.log('[subscriber:' + name + '] Error');
-        reject(error);
-      });
+      await this.subscriber.init(rtcConfig)
+      subscriberMap[name] = this.subscriber
+      self.requestLayoutFn.call(null)
+      await this.subscriber.subscribe()
+
+    } catch (error) {
+      console.log('[subscriber:' + name + '] Error')
+      self.reject(error)
+    }
   }
 
   window.getConferenceSubscriberElementContainerId = getSubscriberElementContainerId;

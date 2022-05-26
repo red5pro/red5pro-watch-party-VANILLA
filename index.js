@@ -26,8 +26,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 (function(window, document, red5prosdk) {
   'use strict';
 
+  var regex = /ken/gi
   var isPublishing = false;
-  var isDebug = window.getParameterByName('debug')
+  var isDebug = window.getParameterByName('debug') && window.getParameterByName('debug') === 'true'
 
   var serverSettings = (function() {
     var settings = sessionStorage.getItem('r5proServerSettings');
@@ -55,10 +56,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var updateStatusFromEvent = window.red5proHandlePublisherEvent; // defined in src/template/partial/status-field-publisher.hbs
 
   var targetPublisher;
+  var mediaStream;
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
   var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
   var socketEndpoint = window.query('socket') || 'localhost';
+  var hostEndpoint = window.getParameterByName('host');
+  configuration.host = hostEndpoint || configuration.host
   
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
@@ -151,7 +155,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       document.querySelectorAll('.debug').forEach(e => e.classList.remove('hidden'))
       document.querySelector('.debug').innerText = streamName;
     }
-    doPublish(streamName);
+    doPublish(roomName, streamName);
     setPublishingUI(streamName);
   });
 
@@ -257,7 +261,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (event.type === 'WebSocket.Message.Unhandled') {
       console.log(event);
     } else if (event.type === red5prosdk.RTCPublisherEventTypes.MEDIA_STREAM_AVAILABLE) {
-      window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
+//      window.allowMediaStreamSwap(targetPublisher, targetPublisher.getOptions().mediaConstraints, document.getElementById('red5pro-publisher'));
     } else if (event.type === 'Publisher.Connection.Closed' && !forceClosed) {
       notifyOfPublishFailure()
     }
@@ -322,11 +326,32 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function setPublishingUI (streamName) {
-    const tray = document.querySelector('.bottom-viewers')
+    const tray = document.querySelector('.side-viewers')
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
-    tray.appendChild(pubView)
+    const div = document.createElement('div')
+    const nameField = document.createElement('div')
+    const videoHolder = document.createElement('div')
+    const p = document.createElement('p')
+    const t = document.createTextNode(streamName)
+    div.classList.add('video-card')
+    videoHolder.classList.add('video-holder')
+    p.classList.add('name-field')
+    p.appendChild(t)
+    nameField.appendChild(p)
+    div.appendChild(nameField)
+    div.appendChild(videoHolder)
+    videoHolder.appendChild(pubView)
+    tray.appendChild(div)
     pubView.classList.add('red5pro-publisher')
+
+    if (regex.exec(streamName)) {
+      const canvas = document.createElement('canvas')
+      canvas.classList.add('detect-canvas')
+      canvas.style.transform = 'scaleX(-1)'
+      videoHolder.appendChild(canvas)
+      window.doDetect(pubView, canvas, true)
+    }
 
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
@@ -336,12 +361,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
+    Array.prototype.forEach.call(document.getElementsByClassName('show-on-broadcast'), function (el) {
+      el.classList.remove('hidden');
+    });
+    document.querySelector('.side-viewers').style.backgroundColor = 'black'
   }
 
   // eslint-disable-next-line no-unused-vars
   function updatePublishingUIOnStreamCount (streamCount) {
     /*if (streamCount > 0) {
-      publisherContainer.classList.remove('margin-center');
+      publisherContainer.classList
+      ('margin-center');
     } else {
       publisherContainer.classList.add('margin-center');
     }*/
@@ -350,113 +380,118 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
-    // var url = `${wsProtocol}://${socketEndpoint}?room=${roomName}&streamName=${streamName}`
+    //    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
     var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
       if (roomName === payload.room) {
-        processStreams(payload.streams, streamsList, streamName);
+        processStreams(payload.streams, streamsList, roomName, streamName);
       }
     }
   }
 
-  function createMainVideo () {
+  const createMainVideo = async () => {
 
-    var mainVideo = new red5prosdk.RTCSubscriber();
-    mainVideo.on('*', event => {
-      if (event.type === 'Subscribe.Time.Update') return
-      console.log('DEMO', `demo event: ${event.type}.`)
-      if (event.type === 'Subscribe.Connection.Closed') {
-        retry()
-      } else if (event.type === 'Subscribe.Play.Unpublish') {
-        retry()
+    const retry = () => {
+      var t = setTimeout(() => {
+        console.log('Retrying playback of main video.')
+        clearTimeout(t)
+        createMainVideo()
+      }, 1000)
+    }
+
+    try {
+
+      let config = {
+        protocol: 'wss',
+        port: 443,
+        host: 'your-host-here',
+        app: 'live',
+        streamName: 'demo-stream',
+        mediaElementId: 'red5pro-mainVideoView',
+        subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
       }
-    })
-    mainVideo.init({
-      protocol: 'wss',
-      port: 443,
-      host: 'your-host-here',
-      app: 'live',
-      streamName: 'demo-stream',
-      rtcConfiguration: {
-        iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
-        iceCandidatePoolSize: 2,
-        bundlePolicy: 'max-bundle'
-      }, // See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#RTCConfiguration_dictionary
-      mediaElementId: 'red5pro-mainVideoView',
-      subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16),
-      videoEncoding: 'NONE',
-      audioEncoding: 'NONE',
-    })
-    .then(function(mainVideo) {
-      return mainVideo.subscribe();
-    })
-    .then(function(mainVideo) {
-      // subscription is complete.
-      // playback should begin immediately due to
-      //   declaration of `autoplay` on the `video` element.
-    })
-    .catch(function(error) {
-      // A fault occurred while trying to initialize and playback the stream.
-      console.error(error)
-      retry()
-    });
-  
-  }
-
-  function determinePublisher () {
-
-    var config = Object.assign({},
-                      configuration,
-                      {
-                        streamMode: configuration.recordBroadcast ? 'record' : 'live'
-                      },
-                      getAuthenticationParams(),
-                      getUserMediaConfiguration());
-
-    var rtcConfig = Object.assign({}, config, {
-                      protocol: getSocketLocationFromProtocol().protocol,
-                      port: getSocketLocationFromProtocol().port,
-                      bandwidth: {
-                        video: 256
-                      },
-                      mediaConstraints: {
-                        audio: true,
-                        video: {
-                          width: {
-                            exact: 320
-                          },
-                          height: {
-                            exact: 240
-                          },
-                          frameRate: {
-                            exact: 15
-                          }
-                        }
-                      },
-                      streamName: streamName
-                   });
-
-    var publisher = new red5prosdk.RTCPublisher();
-    return publisher.init(rtcConfig);
-
-  }
-
-  function doPublish (name) {
-    targetPublisher.publish(name)
-      .then(function () {
-        onPublishSuccess(targetPublisher);
-        createMainVideo();
-        updateInitialMediaOnPublisher();
+      var mainVideo = new red5prosdk.RTCSubscriber();
+      mainVideo.on('*', event => {
+        if (event.type === 'Subscribe.Time.Update') return
+        console.log('DEMO', `demo event: ${event.type}.`)
+        if (event.type === 'Subscribe.Connection.Closed') {
+          retry()
+        }
       })
-      .catch(function (error) {
-        var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
-        console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
-        console.error(error);
-        onPublishFail(jsonError);
-       });
+      await mainVideo.init(config)
+      await mainVideo.subscribe()
+    } catch (e) {
+      console.error(e)
+      retry()
+    }
+  }
+
+  const startPreview = async () => {
+    const element = document.querySelector('#red5pro-publisher')
+    const constraints = {
+      audio: true,
+      video: {
+        width: {
+          ideal: 320
+        },
+        height: {
+          ideal: 240
+        }
+      }
+    }
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
+      document.querySelector('#red5pro-publisher').srcObject = mediaStream
+      window.allowMediaStreamSwap(element, constraints, mediaStream, activeStream => {
+        mediaStream = activeStream
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const determinePublisher = async (mediaStream, room, name) => {
+
+    let config = Object.assign({},
+      configuration,
+      {
+        streamMode: configuration.recordBroadcast ? 'record' : 'live'
+      },
+      getAuthenticationParams(),
+      getUserMediaConfiguration());
+
+    let rtcConfig = Object.assign({}, config, {
+      protocol: getSocketLocationFromProtocol().protocol,
+      port: getSocketLocationFromProtocol().port,
+      bandwidth: {
+        video: 256
+      },
+      app: `live/${room}`,
+      streamName: name
+    });
+
+    var publisher = new red5prosdk.RTCPublisher()
+    return await publisher.initWithStream(rtcConfig, mediaStream)
+  }
+
+  const doPublish = async (room, name) => {
+    try {
+      targetPublisher = await determinePublisher(mediaStream, room, name)
+      targetPublisher.on('*', onPublisherEvent)
+      await targetPublisher.publish(name)
+
+      onPublishSuccess(targetPublisher)
+      createMainVideo()
+      updateInitialMediaOnPublisher()
+    } catch (error) {
+      var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
+      console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
+      console.error(error);
+      onPublishFail(jsonError);
+    }
   }
 
   function unpublish () {
@@ -480,18 +515,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   // Kick off.
-  determinePublisher()
-    .then(function (publisherImpl) {
-      targetPublisher = publisherImpl;
-      targetPublisher.on('*', onPublisherEvent);
-      return targetPublisher.preview();
-    })
-    .catch(function (error) {
-      var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
-      console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
-      console.error(error);
-      onPublishFail(jsonError);
-     });
+  startPreview()
 
   var shuttingDown = false;
   function shutdown () {
@@ -511,12 +535,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   window.addEventListener('pagehide', shutdown);
 
   var streamsList = [];
-  const bottomRowLimit = 4;
+  const bottomRowLimit = 0;
   //var subscribersEl = document.getElementById('subscribers');
   //put the whole fn below in a for loop (2 thru 8 or w/e) and have the 'viewer' below be 'viewer'+i
   //for(j = 2; j < 9; j++){ //tab everything below over 1 tab
   var bottomSubscribersEl = document.getElementById('bottomViewers');
-  var sideSubscribersEl = document.getElementById('sideViewers');
+  var sideSubscribersEl = document.querySelector('.side-viewers');
 
   function positionExisting (list) {
     list.forEach((name, index) => {
@@ -573,7 +597,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     // console.log('ERRANT SWEEP', errantNames)
   }
 
-  function processStreams (list, previousList, exclusion) {
+  function processStreams (list, previousList, roomName, exclusion) {
     console.log('TEST', `To streams: ${list}`)
     var nonPublishers = list.filter(function (name) {
       return name !== exclusion;
@@ -600,22 +624,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     });
     relayout()
 
+    var baseSubscriberConfig = Object.assign({},
+      configuration,
+      {
+        protocol: getSocketLocationFromProtocol().protocol,
+        port: getSocketLocationFromProtocol().port
+      },
+      getAuthenticationParams(), 
+      {
+        app: `live/${roomName}`
+    });
     var i, length = subscribers.length - 1;
+    /*
     var sub;
     for(i = 0; i < length; i++) {
       sub = subscribers[i];
       sub.next = subscribers[sub.index+1];
     }
+    */
     if (subscribers.length > 0) {
-      var baseSubscriberConfig = Object.assign({},
-                                  configuration,
-                                  {
-                                    protocol: getSocketLocationFromProtocol().protocol,
-                                    port: getSocketLocationFromProtocol().port
-                                  },
-                                  getAuthenticationParams(),
-                                  getUserMediaConfiguration());
-      subscribers[0].execute(baseSubscriberConfig);
+      //subscribers[0].execute(baseSubscriberConfig);
+      subscribers.forEach(sub => {
+        sub.execute(baseSubscriberConfig)
+      })
     }
   }
 
