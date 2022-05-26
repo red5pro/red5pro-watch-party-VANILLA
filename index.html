@@ -53,49 +53,52 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
         </p>
       </div>
       <div id="publisher-container" class="publisher-section publisher-container remove-on-broadcast" >
-         <video id="red5pro-publisher"
+        <video id="red5pro-publisher"
             autoplay playsinline muted
             oncontextmenu="return false;"
             width="100%" height="100%">
-         </video>
-        <div class="settings-area remove-on-broadcast">
-          <p>
-            <label for="room-field" class="device-label remove-on-broadcast">Room:</label>
-            <input id="room-field" name="room-field" class="settings-input remove-on-broadcast">
-          </p>
-        </div>
-        <div id="publisher-session" class="publisher-session hidden">
-          <p id="status-field"></p>
-          <p id="statistics-field" class="centered status-field statistics-field hidden">
-            Bitrate: <span id="bitrate-field" class="bitrate-field">N/A</span>.&nbsp;
-            Packets Sent: <span id="packets-field" class="packets-field">N/A</span>.
-            <br/>
-            <span>Resolution: </span><span id="resolution-field" class="resolution-field">0x0</span>.
-          </p>
-        </div>
-        <div id="publisher-settings" class="publisher-settings">
-          <p class="remove-on-broadcast">
-            <label class="device-label" for="streamname-field">Stream Name:</label>
-            <input id="streamname-field" name="streamname-field" class="settings-input">
-          </p>
-          <hr class="paddedHR" />
-          <p class="remove-on-broadcast">
-            <label class="device-label" for="camera-select">Camera:</label>
-            <select class="control device-control settings-input" name="camera-select" id="camera-select"></select>
-          </p>
-          <p class="remove-on-broadcast">
-            <label class="device-label" for="microphone-select">Microphone:</label>
-            <select class="control device-control settings-input" name="microphone-select" id="microphone-select"></select>
-          </p>
-          <p id="publisher-mute-controls" class="publisher-mute-controls hidden">
-            <label for="video-check">Video: </label>
-            <input type="checkbox" id="video-check" name="video-check" checked>
-            <label for="audio-check">Audio: </label>
-            <input type="checkbox" id="audio-check" name="audio-check" checked>
-          </p>
-          <p id="publisher-name-field" class="publisher-name-field hidden"></p>
-          <div class="remove-on-broadcast">
-            <button id="join-button" class="ui-button">Join!</button>
+        </video>
+        <div class="login-settings">
+          <div class="settings-toggle-container publisher-settings">
+            <p id="settings-toggle" class="settings-toggle">Advanced Settings</p>
+          </div>
+          <div id="publisher-session" class="publisher-session hidden">
+            <p id="status-field"></p>
+            <p id="statistics-field" class="centered status-field statistics-field hidden">
+              Bitrate: <span id="bitrate-field" class="bitrate-field">N/A</span>.&nbsp;
+              Packets Sent: <span id="packets-field" class="packets-field">N/A</span>.
+              <br/>
+              <span>Resolution: </span><span id="resolution-field" class="resolution-field">0x0</span>.
+            </p>
+          </div>
+          <div id="publisher-settings" class="publisher-settings">
+            <p class="remove-on-broadcast">
+              <label class="device-label" for="streamname-field">Enter Your Name:</label>
+              <input id="streamname-field" name="streamname-field" class="settings-input" placeholder="Your Name">
+            </p>
+            <hr class="paddedHR" />
+            <p class="remove-on-broadcast advanced-setting hidden">
+              <label for="room-field" class="device-label remove-on-broadcast">Room:</label>
+              <input id="room-field" name="room-field" class="settings-input remove-on-broadcast">
+            </p>
+            <p class="remove-on-broadcast advanced-setting hidden">
+              <label class="device-label" for="camera-select">Camera:</label>
+              <select class="control device-control settings-input" name="camera-select" id="camera-select"></select>
+            </p>
+            <p class="remove-on-broadcast advanced-setting hidden">
+              <label class="device-label" for="microphone-select">Microphone:</label>
+              <select class="control device-control settings-input" name="microphone-select" id="microphone-select"></select>
+            </p>
+            <p id="publisher-mute-controls" class="publisher-mute-controls hidden">
+              <label for="video-check">Video: </label>
+              <input type="checkbox" id="video-check" name="video-check" checked>
+              <label for="audio-check">Audio: </label>
+              <input type="checkbox" id="audio-check" name="audio-check" checked>
+            </p>
+            <p id="publisher-name-field" class="publisher-name-field hidden"></p>
+            <div class="remove-on-broadcast">
+              <button id="join-button" class="ui-button">Join!</button>
+            </div>
           </div>
         </div>
       </div>

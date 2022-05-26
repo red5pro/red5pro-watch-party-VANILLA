@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           '<p class="subscriber-status-field">On hold.</p>' +
         '</div>' +
         '<div class="video-holder">' +
-          '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber red5pro-media"></video>' +
+          '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber"></video>' +
           '<canvas class="detect-canvas"></canvas>' +
         '</div>' +
         '<div class="audio-holder centered hidden">' +
@@ -103,9 +103,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     parent.appendChild(card);
     var videoId = getSubscriberElementId(streamName);
     var audioId = getSubscriberAudioElementId(streamName);
-    var videoElement = card.getElementsByClassName('red5pro-media')[0];
+    var videoElement = card.getElementsByClassName('red5pro-subscriber')[0];
     var canvasElement = card.getElementsByClassName('detect-canvas')[0];
-    var audioElement = card.getElementsByClassName('red5pro-media')[1];
+    var audioElement = card.getElementsByTagName('audio')[0];
     var subscriberNameField = card.getElementsByClassName('subscriber-name-field')[0];
     var subscriberIdField = card.getElementsByClassName('subscriber-id-field')[0];
     subscriberNameField.innerText = streamName;

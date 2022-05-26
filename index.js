@@ -59,11 +59,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var mediaStream;
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
-  var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
+  var streamName = window.query('streamName') || '';
   var socketEndpoint = window.query('socket') || 'localhost';
   var hostEndpoint = window.getParameterByName('host');
   configuration.host = hostEndpoint || configuration.host
-  
+
+  var isAdvancedSettings = false;
+  var advancedToggle = document.getElementById('settings-toggle');
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
   var publisherContainer = document.getElementById('publisher-container');
@@ -166,9 +168,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var isSecure = true; //protocol == 'https';
 
   function saveSettings () {
-    streamName = streamNameField.value;
+    const name = streamNameField.value === '' ? ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-') : streamNameField.value
+    streamName = name
     roomName = roomField.value;
   }
+
+  function toggleAdvancedSettings () {
+    isAdvancedSettings = !isAdvancedSettings
+    if (isAdvancedSettings) {
+      advancedToggle.innerText = 'Simple Settings'
+      document.querySelectorAll('.advanced-setting').forEach(e => e.classList.remove('hidden'))
+    } else {
+      advancedToggle.innerText = 'Advanced Settings'
+      document.querySelectorAll('.advanced-setting').forEach(e => e.classList.add('hidden'))
+    }
+  }
+
+  advancedToggle.addEventListener('click', toggleAdvancedSettings)
 
   function updateMutedAudioOnPublisher () {
     if (targetPublisher && isPublishing) {

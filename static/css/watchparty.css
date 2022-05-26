@@ -77,6 +77,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   height: 48px;
 }
 
+.login-settings {
+  position: relative;
+}
+
+.settings-toggle-container {
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.settings-toggle {
+  padding: 10px;
+  text-decoration: underline;
+  position: absolute;
+  right: 0px;
+  top: 0;
+  color: #3580A2;
+  cursor: pointer;
+}
+
 .program-container {
   display: flex;
   flex-direction: row;
