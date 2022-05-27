@@ -158,7 +158,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       document.querySelector('.debug').innerText = streamName;
     }
     doPublish(roomName, streamName);
-    setPublishingUI(streamName);
+    setPublishingUI(streamName)    
   });
 
   audioCheck.addEventListener('change', updateMutedAudioOnPublisher);
@@ -341,21 +341,110 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     };
   }
 
+  var videoEnabled = true
+  var audioEnabled = true
+
+  function toggleTrack (publisher, type, active) {
+    var connection = publisher.getPeerConnection()
+    var senders = connection.getSenders()
+    var sender = senders.find(s => s.track && s.track.kind === type)
+    var params = sender.getParameters()
+    params.encodings[0].active = active
+    sender.setParameters(params)
+  }
+
+  function toggleVideo (on, off) {
+    return () => {
+      videoEnabled = !videoEnabled
+      if (videoEnabled) {
+        on.classList.remove('hidden')
+        off.classList.add('hidden')
+        targetPublisher.unmuteVideo()
+        toggleTrack(targetPublisher, 'video', true)
+        hideVideoPoster()
+      } else {
+        on.classList.add('hidden')
+        off.classList.remove('hidden')
+        targetPublisher.muteVideo()
+        toggleTrack(targetPublisher, 'video', false)
+        showVideoPoster()
+      }
+    }
+  }
+
+  function toggleVolume (on, off) {
+    return () => {
+      audioEnabled = !audioEnabled
+      if (audioEnabled) {
+        on.classList.remove('hidden')
+        off.classList.add('hidden')
+        targetPublisher.unmuteAudio()
+        toggleTrack(targetPublisher, 'audio', true)
+      } else {
+        on.classList.add('hidden')
+        off.classList.remove('hidden')
+        targetPublisher.muteAudio()
+        toggleTrack(targetPublisher, 'audio', false)
+      }
+    }
+  }
+
+  function enableToggle (onEl, offEl, factory) {
+    var fn = factory(onEl, offEl)
+    onEl.addEventListener('click', fn)
+    offEl.addEventListener('click', fn)
+  }
+
+  function generatePublisherControls (streamName) {
+    const container = document.createElement('div')
+    const controls = document.createElement('p')
+    const p = document.createElement('p')
+    const t = document.createTextNode(streamName)
+    container.classList.add('publisher-controls_container')
+    controls.classList.add('publisher-controls')
+    const video = document.createElement('p')
+    const videoOn = document.createElement('span')
+    const videoOff = document.createElement('span')
+    video.classList.add('publisher-controls_video')
+    videoOn.classList.add('fa-solid', 'fa-video')
+    videoOff.classList.add('fa-solid', 'fa-video-slash', 'hidden')
+    const volume = document.createElement('p')
+    const volumeOn = document.createElement('span')
+    const volumeOff = document.createElement('span')
+    volume.classList.add('publisher-controls_volume')
+    volumeOn.classList.add('fa-solid', 'fa-volume-high')
+    volumeOff.classList.add('fa-solid', 'fa-volume-xmark', 'hidden')
+    p.classList.add('name-field')
+    video.appendChild(videoOn)
+    video.appendChild(videoOff)
+    volume.appendChild(volumeOn)
+    volume.appendChild(volumeOff)
+    controls.appendChild(video)
+    controls.appendChild(volume)
+    p.appendChild(t)
+    container.appendChild(p)
+    container.appendChild(controls)
+    enableToggle(videoOn, videoOff, toggleVideo)
+    enableToggle(volumeOn, volumeOff, toggleVolume)
+    return container
+  }
+
   function setPublishingUI (streamName) {
     const tray = document.querySelector('.side-viewers')
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
     const div = document.createElement('div')
-    const nameField = document.createElement('div')
     const videoHolder = document.createElement('div')
-    const p = document.createElement('p')
-    const t = document.createTextNode(streamName)
+    const controls = generatePublisherControls(streamName)
+    const poster = document.createElement('p')
+    const icon = document.createElement('span')
+    icon.classList.add('fa-solid', 'fa-user')
     div.classList.add('video-card')
     videoHolder.classList.add('video-holder')
-    p.classList.add('name-field')
-    p.appendChild(t)
-    nameField.appendChild(p)
-    div.appendChild(nameField)
+    poster.classList.add('poster-icon')
+    poster.appendChild(icon)
+    videoHolder.appendChild(poster)
+    div.appendChild(controls)
     div.appendChild(videoHolder)
     videoHolder.appendChild(pubView)
     tray.appendChild(div)

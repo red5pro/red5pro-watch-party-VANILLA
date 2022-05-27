@@ -18,6 +18,16 @@ NONINFRINGEMENT.   IN  NO  EVENT  SHALL INFRARED5, INC. BE LIABLE FOR ANY CLAIM,
 WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT  OF  OR  IN CONNECTION 
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+@font-face {
+  font-family: 'Lato';
+  src: url('fonts/Lato-Regular.ttf'), url('https://fonts.googleapis.com/css?family=Lato:400,700');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+
 .red5pro-media-seektime-slider {
   display: none!important;
 }
@@ -285,11 +295,33 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   position: relative;
 }
 
+.publisher-controls_container {
+  display: flex;
+  flex-direction: row;
+  padding: 14px;
+  box-sizing: border-box;
+  justify-content: space-between;
+      align-items: center;
+  color: white;
+}
+
+.publisher-controls {
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  width: 100px;
+  justify-content: space-evenly;
+}
+
+.publisher-controls_video,
+.publisher-controls_volume {
+  cursor: pointer;
+}
+
 .name-field {
   color: white;
   text-align: center;
-  padding: 4px;
-  width: 100%;
+  width: fit-content;
   box-sizing: border-box;
   background-color: black;
 }
@@ -300,6 +332,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .video-holder {
   width: 100%;
   height: calc(100% - 24px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #333;
+}
+
+.poster-icon {
+  position: absolute;
+  color: white;
+  text-align: center;
+  font-size: 60px;
 }
 
 .red5pro-publisher {
