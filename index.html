@@ -19,9 +19,6 @@ WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
 <html lang="eng">
   <head>
-    <!--{{> meta title='Conference'}}
-    {{> header-scripts}}
-    {{> header-stylesheets}}-->
     <title>Watch Party</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script>
@@ -30,7 +27,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
     <script src="static/script/red5pro-utils.js"></script>
     <script src="static/script/reachability.js"></script>
     <script src="static/lib/face-api/face-api.min.js"></script>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <link rel="stylesheet" href="static/css/reset.css">
     <link rel="stylesheet" href="static/assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="static/css/testbed.css">
@@ -49,12 +45,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
         <p class="tagline">Join the Party!</p>
         <p class="topbar-item"><span>NABShow 2022</span></p>
         <p class="topbar-item">
-          <img src="static/assets/Netinsight_logo.webp" alt="Net Insight">
+          <img class="profile-icon" src="static/assets/Netinsight_logo.webp" alt="Net Insight">
           <img src="static/assets/Red5Pro_logo.svg" alt="Red5 Pro">
         </p>
       </div>
       <div id="publisher-container" class="publisher-section publisher-container remove-on-broadcast" >
         <video id="red5pro-publisher"
+            class="flipped-publisher"
             autoplay playsinline muted
             oncontextmenu="return false;"
             width="100%" height="100%">

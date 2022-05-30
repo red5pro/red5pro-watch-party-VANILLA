@@ -52,9 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           '<video autoplay controls playsinline width="100%" height="100%" class="red5pro-subscriber"></video>' +
           '<canvas class="detect-canvas"></canvas>' +
         '</div>' +
-        '<div class="audio-holder centered hidden">' +
-          '<audio autoplay playsinline class="red5pro-media"></audio>' +
-        '</div>' +
         '<div class="centered hidden">' +
           '<p class="subscriber-name-field"></span></p>' +
           '<p class="subscriber-id-field"></span></p>' +
@@ -74,10 +71,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function getSubscriberElementContainerId (streamName) {
     return [getSubscriberElementId(streamName), 'container'].join('-')
-  }
-
-  function getSubscriberAudioElementId (streamName) {
-    return ['red5pro', 'subscriber', streamName, 'audio'].join('-');
   }
 
   function removeLoadingIcon (container) {
@@ -102,16 +95,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     var card = templateContent(subscriberTemplate);
     parent.appendChild(card);
     var videoId = getSubscriberElementId(streamName);
-    var audioId = getSubscriberAudioElementId(streamName);
     var videoElement = card.getElementsByClassName('red5pro-subscriber')[0];
     var canvasElement = card.getElementsByClassName('detect-canvas')[0];
-    var audioElement = card.getElementsByTagName('audio')[0];
     var subscriberNameField = card.getElementsByClassName('subscriber-name-field')[0];
     var subscriberIdField = card.getElementsByClassName('subscriber-id-field')[0];
     subscriberNameField.innerText = streamName;
     subscriberIdField.innerText = '(' + subId + ')';
     videoElement.id = videoId;
-    audioElement.id = audioId;
     card.id = getSubscriberElementContainerId(streamName);
     //    card.style.position = 'relative'
     card.classList.add('video-card')
@@ -123,48 +113,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     return card;
   }
 
-  function addAudioSubscriberDecoy (streamName, config, cb) {
-    var uid = Math.floor(Math.random() * 0x10000).toString(16);
-    var elementId = getSubscriberAudioElementId(streamName);
-    var extension = {
-      streamName: streamName,
-      mediaElementId: elementId,
-      subscriptionId: ['subscriber-audio', uid].join('-')
-    };
-    console.log('[audio:decoy] Adding audio decoy for ' + streamName);
-    new red5prosdk.RTCSubscriber()
-      .init(Object.assign(config, extension))
-      .then(function (aSubscriber) {
-        cb(aSubscriber)
-        console.log('[audio:decoy] Initialized ' + streamName);
-        /*
-        aSubscriber.on('*', function (event) {
-          console.log('[audio:decoy:' + streamName + ':' + elementId + '] ' + event.type);
-        });
-        */
-        return aSubscriber.subscribe();
-      })
-      .then(function () {
-        console.log('[audio:decoy] Subscribing to ' + streamName);
-      })
-      .catch(function (error) {
-        console.log('[audio:decoy] Error in subscribing to ' + streamName);
-        console.log(error);
-      });
-  }
-
-  function removeAudioSubscriberDecoy (streamName, decoy) {
-    console.log('[audio:decoy] Removing audio decoy for ' + streamName);
-    decoy.unsubscribe();
-  }
-
   var SubscriberItem = function (subStreamName, parent, index, requestLayoutFn) {
     this.subscriptionId = [subStreamName, 'sub'].join('-');
     this.streamName = subStreamName;
     this.subscriber = undefined;
     this.baseConfiguration = undefined;
     this.streamingMode = undefined;
-    this.audioDecoy = undefined; // Used when initial mode is `Audio`.
     this.index = index;
     this.next = undefined;
     this.parent = parent;
@@ -172,8 +126,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     this.card = generateNewSubscriberDOM(this.streamName, this.subscriptionId, this.parent);
     this.statusField = this.card.getElementsByClassName('subscriber-status-field')[0];
-    this.toggleVideoPoster = this.toggleVideoPoster.bind(this);
-    this.handleAudioDecoyVolumeChange = this.handleAudioDecoyVolumeChange.bind(this);
     this.handleStreamingModeMetadata = this.handleStreamingModeMetadata.bind(this);
 
     if (this.card.querySelector('.name-field')) {
@@ -188,40 +140,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     addLoadingIcon(this.card)
     this.requestLayoutFn.call(null)
   }
-  SubscriberItem.prototype.handleAudioDecoyVolumeChange = function (event) {
-    if (this.audioDecoy) {
-      this.audioDecoy.setVolume(event.data.volume);
-    }
-  }
   SubscriberItem.prototype.handleStreamingModeMetadata = function (streamingMode) {
-    if (isMoz) return; // It works in Firefox!
-    var self = this;
-    if (this.streamingMode !== streamingMode) {
-      var previousStreamingMode = this.streamingMode;
-      if (streamingMode === 'Audio' && previousStreamingMode === undefined) {
-        // Then, we have started playback of an Audio only stream because
-        // the broadcaster has turned off their Camera stream.
-        // There is a bug in some browsers that will not allow A/V bundled streams
-        // to playback JUST audio on initial subscription in a <video> element; they only allow <audio>.
-        addAudioSubscriberDecoy(this.streamName, this.baseConfiguration, function (subscriberInst) {
-          self.audioDecoy = subscriberInst;
-          self.subscriber.on('Subscribe.Volume.Change', self.handleAudioDecoyVolumeChange);
-        });
-      } else if (this.audioDecoy) {
-        removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
-        this.subscriber.off('Subscribe.Volume.Change', this.handleAudioDecoyVolumeChange)
-        this.audioDecoy = undefined;
-      }
-    }
     this.streamingMode = streamingMode;
-  }
-  SubscriberItem.prototype.toggleVideoPoster = function (showPoster) {
-    var video = document.getElementById(getSubscriberElementId(this.streamName));
-    if (showPoster) {
-      video.classList.add('hidden');
-    } else {
-      video.classList.remove('hidden');
-    }
   }
   SubscriberItem.prototype.respond = function (event) {
     if (event.type === 'Subscribe.Time.Update') return;
@@ -231,7 +151,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (event.type === 'Subscribe.Metadata') {
       if (event.data.streamingMode) {
         this.handleStreamingModeMetadata(event.data.streamingMode)
-        this.toggleVideoPoster(!event.data.streamingMode.match(/Video/));
       }
     } else if (event.type === 'Subscriber.Play.Unpublish') {
       this.dispose()
@@ -305,9 +224,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (this.subscriber) {
       this.subscriber.off('*', this.respond);
       this.subscriber.unsubscribe().then(cleanup).catch(cleanup);
-    }
-    if (this.audioDecoy) {
-      removeAudioSubscriberDecoy(this.streamName, this.audioDecoy);
     }
   }
   SubscriberItem.prototype.execute = async function (config) {

@@ -136,7 +136,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     updateStatistics(bitrate, packetsSent, frameWidth, frameHeight);
     if (packetsSent > 100) {
       clearTimeout(packetsOutTimeout)
-      establishSocketHost(targetPublisher, roomField.value, streamNameField.value);
+      establishSocketHost(targetPublisher, roomName, streamName);
+      // TODO: Allow muting now.
     }
   }
 
@@ -295,7 +296,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     //here remove hidden main video 
     //establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() !== 'RTC') {
-      establishSocketHost(publisher, roomField.value, streamNameField.value);
+      establishSocketHost(publisher, roomName, streamName);
     }
     try {
       var pc = publisher.getPeerConnection();
@@ -344,13 +345,71 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var videoEnabled = true
   var audioEnabled = true
 
+  let blankTrack
+  let broadcastTrack
+
+  const generateBlankTrack = (width, height) => {
+    const img = document.querySelector('.profile-icon')
+    const imgWidth = img.clientWidth
+    const imgHeight = img.clientHeight
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.classList.add('poster-icon')
+    const context = canvas.getContext('2d')
+    const media = canvas.captureStream(25)
+    const track = media.getVideoTracks()[0]
+    const draw = () => {
+      if (!videoEnabled) {
+        requestAnimationFrame(draw)
+      }
+      context.fillStyle = '#111'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      context.drawImage(img, (width - imgWidth) * 0.5, (height - imgHeight) * 0.5, imgWidth, imgHeight)
+    }
+
+    draw()
+    return {canvas, media, track}
+  }
+
+  const sendBlankVideo = pub => {
+    const el = document.querySelector('#red5pro-publisher')
+    const connection = pub.getPeerConnection()
+    const stream = pub.getMediaStream()
+    const senders = connection.getSenders()
+    const sender = senders.find(s => s.track && s.track.kind === 'video')
+    const { canvas, media, track } = generateBlankTrack(el.clientWidth, el.clientHeight)
+    broadcastTrack = sender.track.clone()
+    blankTrack = track
+    broadcastTrack.enabled = false
+    blankTrack.enabled = true
+    sender.replaceTrack(blankTrack)
+    el.srcObject = media
+    el.classList.remove('flipped-publisher')
+  }
+
+  const resumeVideo = pub => {
+    const el = document.querySelector('#red5pro-publisher')
+    const connection = pub.getPeerConnection()
+    const stream = pub.getMediaStream()
+    const senders = connection.getSenders()
+    const sender = senders.find(s => s.track && s.track.kind === 'video')
+    broadcastTrack.enabled = true
+    sender.replaceTrack(broadcastTrack)
+    blankTrack = undefined
+    el.srcObject = pub.getMediaStream()
+    el.classList.add('flipped-publisher')
+  }
+
   function toggleTrack (publisher, type, active) {
-    var connection = publisher.getPeerConnection()
-    var senders = connection.getSenders()
-    var sender = senders.find(s => s.track && s.track.kind === type)
-    var params = sender.getParameters()
-    params.encodings[0].active = active
-    sender.setParameters(params)
+    if (publisher && publisher.getPeerConnection()) {
+      var connection = publisher.getPeerConnection()
+      var senders = connection.getSenders()
+      var sender = senders.find(s => s.track && s.track.kind === type)
+      var params = sender.getParameters()
+      params.encodings[0].active = active
+      sender.setParameters(params)
+    }
   }
 
   function toggleVideo (on, off) {
@@ -359,20 +418,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       if (videoEnabled) {
         on.classList.remove('hidden')
         off.classList.add('hidden')
-        targetPublisher.unmuteVideo()
-        toggleTrack(targetPublisher, 'video', true)
-        hideVideoPoster()
+        resumeVideo(targetPublisher)
       } else {
         on.classList.add('hidden')
         off.classList.remove('hidden')
-        targetPublisher.muteVideo()
-        toggleTrack(targetPublisher, 'video', false)
-        showVideoPoster()
+        sendBlankVideo(targetPublisher)
       }
     }
   }
 
-  function toggleVolume (on, off) {
+  function toggleAudio (on, off) {
     return () => {
       audioEnabled = !audioEnabled
       if (audioEnabled) {
@@ -398,9 +453,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function generatePublisherControls (streamName) {
     const container = document.createElement('div')
     const controls = document.createElement('p')
-    const p = document.createElement('p')
-    const t = document.createTextNode(streamName)
-    container.classList.add('publisher-controls_container')
+    container.classList.add('publisher-controls_container', 'hidden')
     controls.classList.add('publisher-controls')
     const video = document.createElement('p')
     const videoOn = document.createElement('span')
@@ -408,24 +461,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     video.classList.add('publisher-controls_video')
     videoOn.classList.add('fa-solid', 'fa-video')
     videoOff.classList.add('fa-solid', 'fa-video-slash', 'hidden')
-    const volume = document.createElement('p')
-    const volumeOn = document.createElement('span')
-    const volumeOff = document.createElement('span')
-    volume.classList.add('publisher-controls_volume')
-    volumeOn.classList.add('fa-solid', 'fa-volume-high')
-    volumeOff.classList.add('fa-solid', 'fa-volume-xmark', 'hidden')
-    p.classList.add('name-field')
+    videoOff.style.color = 'red'
+    const audio = document.createElement('p')
+    const audioOn = document.createElement('span')
+    const audioOff = document.createElement('span')
+    audio.classList.add('publisher-controls_audio')
+    audioOn.classList.add('fa-solid', 'fa-microphone')
+    audioOff.classList.add('fa-solid', 'fa-microphone-slash', 'hidden')
+    audioOff.style.color = 'red'
     video.appendChild(videoOn)
     video.appendChild(videoOff)
-    volume.appendChild(volumeOn)
-    volume.appendChild(volumeOff)
+    audio.appendChild(audioOn)
+    audio.appendChild(audioOff)
     controls.appendChild(video)
-    controls.appendChild(volume)
-    p.appendChild(t)
-    container.appendChild(p)
+    controls.appendChild(audio)
     container.appendChild(controls)
     enableToggle(videoOn, videoOff, toggleVideo)
-    enableToggle(volumeOn, volumeOff, toggleVolume)
+    enableToggle(audioOn, audioOff, toggleAudio)
     return container
   }
 
@@ -434,16 +486,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
     const div = document.createElement('div')
+    const p = document.createElement('p')
+    const t = document.createTextNode(streamName)
     const videoHolder = document.createElement('div')
     const controls = generatePublisherControls(streamName)
-    const poster = document.createElement('p')
-    const icon = document.createElement('span')
-    icon.classList.add('fa-solid', 'fa-user')
+    p.classList.add('name-field')
     div.classList.add('video-card')
     videoHolder.classList.add('video-holder')
-    poster.classList.add('poster-icon')
-    poster.appendChild(icon)
-    videoHolder.appendChild(poster)
+    p.appendChild(t)
+    div.appendChild(p)
     div.appendChild(controls)
     div.appendChild(videoHolder)
     videoHolder.appendChild(pubView)
@@ -592,6 +643,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       onPublishSuccess(targetPublisher)
       createMainVideo()
       updateInitialMediaOnPublisher()
+      document.querySelectorAll('.publisher-controls_container').forEach(el => el.classList.remove('hidden'))
     } catch (error) {
       var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
       console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);

@@ -283,7 +283,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
   */
 
-#red5pro-publisher {
+.flipped-publisher {
   transform: scaleX(-1);
 }
 
@@ -295,14 +295,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   position: relative;
 }
 
-.publisher-controls_container {
+.publisher-controls_container,
+.subscriber-controls_container {
   display: flex;
   flex-direction: row;
   padding: 14px;
   box-sizing: border-box;
-  justify-content: space-between;
-      align-items: center;
+  justify-content: end;
+  align-items: center;
   color: white;
+  position: absolute;
+  z-index: 10;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  -webkit-user-select: none; /* for Safari */
+  user-select: none;
 }
 
 .publisher-controls {
@@ -310,20 +318,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   flex-direction: row;
   font-size: 20px;
   width: 100px;
-  justify-content: space-evenly;
+  justify-content: end;
+  text-shadow: 0 1px 2px rgb(0 0 0), 0 0 2px rgb(0 0 0);
 }
 
 .publisher-controls_video,
-.publisher-controls_volume {
+.publisher-controls_audio {
   cursor: pointer;
+  text-align: center;
+}
+
+.publisher-controls_video > span,
+.publisher-controls_audio > span {
+  width: 25px;
+  margin-left: 14px;
 }
 
 .name-field {
   color: white;
   text-align: center;
-  width: fit-content;
+  width: 100%;
   box-sizing: border-box;
-  background-color: black;
+  padding: 4px;
 }
 
 /*
@@ -336,7 +352,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #333;
+  background-color: #222;
 }
 
 .poster-icon {
@@ -352,6 +368,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 .red5pro-subscriber {
   object-fit: contain;
+  z-index: 1;
 }
 
 .red5pro-subscriber-full {
@@ -434,6 +451,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   .video-card {
     width: calc(100% * 0.5);
     height: unset;
+    min-height: 130px;
   }
   #red5pro-publisher {
     max-height: calc(100vh - 500px);
