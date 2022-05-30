@@ -74,8 +74,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var publisherNameField = document.getElementById('publisher-name-field');
   var streamNameField = document.getElementById('streamname-field');
   var publisherVideo = document.getElementById('red5pro-publisher');
-  var audioCheck = document.getElementById('audio-check');
-  var videoCheck = document.getElementById('video-check');
   var joinButton = document.getElementById('join-button');
   var statisticsField = document.getElementById('statistics-field');
   var bitrateField = document.getElementById('bitrate-field');
@@ -137,7 +135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (packetsSent > 100) {
       clearTimeout(packetsOutTimeout)
       establishSocketHost(targetPublisher, roomName, streamName);
-      // TODO: Allow muting now.
+      enableMuteOptions()
     }
   }
 
@@ -149,8 +147,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   roomField.value = roomName;
   streamNameField.value = streamName;
-  audioCheck.checked = configuration.useAudio;
-  videoCheck.checked = configuration.useVideo;
 
   joinButton.addEventListener('click', function () {
     saveSettings();
@@ -162,8 +158,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     setPublishingUI(streamName)    
   });
 
-  audioCheck.addEventListener('change', updateMutedAudioOnPublisher);
-  videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
   var isSecure = true; //protocol == 'https';
@@ -174,7 +168,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     roomName = roomField.value;
   }
 
-  function toggleAdvancedSettings () {
+  const toggleAdvancedSettings = () => {
     isAdvancedSettings = !isAdvancedSettings
     if (isAdvancedSettings) {
       advancedToggle.innerText = 'Simple Settings'
@@ -186,78 +180,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   advancedToggle.addEventListener('click', toggleAdvancedSettings)
-
-  function updateMutedAudioOnPublisher () {
-    if (targetPublisher && isPublishing) {
-      var c = targetPublisher.getPeerConnection();
-      var senders = c.getSenders();
-      var params = senders[0].getParameters();
-      if (audioCheck.checked) { 
-        if (audioTrackClone) {
-          senders[0].replaceTrack(audioTrackClone);
-          audioTrackClone = undefined;
-        } else {
-          try {
-            targetPublisher.unmuteAudio();
-            params.encodings[0].active = true;
-            senders[0].setParameters(params);
-          } catch (e) {
-            // no browser support, let's use mute API.
-            targetPublisher.unmuteAudio();
-          }
-        }
-      } else { 
-        try {
-          targetPublisher.muteAudio();
-          params.encodings[0].active = false;
-          senders[0].setParameters(params);
-        } catch (e) {
-          // no browser support, let's use mute API.
-          targetPublisher.muteAudio();
-        }
-      }
-    }
-  }
-
-  function updateMutedVideoOnPublisher () {
-    if (targetPublisher && isPublishing) {
-      if (videoCheck.checked) {
-        if (videoTrackClone) {
-          var c = targetPublisher.getPeerConnection();
-          var senders = c.getSenders();
-          senders[1].replaceTrack(videoTrackClone);
-          videoTrackClone = undefined;
-        } else {
-          targetPublisher.unmuteVideo();
-        }
-      } else { 
-        targetPublisher.muteVideo(); 
-      }
-    }
-    !videoCheck.checked && showVideoPoster();
-    videoCheck.checked && hideVideoPoster();
-  }
-
-  var audioTrackClone;
-  var videoTrackClone;
-  function updateInitialMediaOnPublisher () {
-    var t = setTimeout(function () {
-      // If we have requested no audio and/or no video in our initial broadcast,
-      // wipe the track from the connection.
-      var audioTrack = targetPublisher.getMediaStream().getAudioTracks()[0];
-      var videoTrack = targetPublisher.getMediaStream().getVideoTracks()[0];
-      var connection = targetPublisher.getPeerConnection();
-      if (!videoCheck.checked) {
-        videoTrackClone = videoTrack.clone();
-        connection.getSenders()[1].replaceTrack(null);
-      }
-      if (!audioCheck.checked) {
-        audioTrackClone = audioTrack.clone();
-        connection.getSenders()[0].replaceTrack(null);
-      }
-      clearTimeout(t);
-    }, 2000); 
-  }
 
   function showVideoPoster () {
     publisherVideo.classList.add('hidden');
@@ -347,6 +269,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   let blankTrack
   let broadcastTrack
+
+  const enableMuteOptions = () => {
+    const videoOn = document.querySelector('.publisher-controls_video > .video-on')
+    const videoOff = document.querySelector('.publisher-controls_video > .video-off')
+    const audioOn = document.querySelector('.publisher-controls_audio > .mic-on')
+    const audioOff = document.querySelector('.publisher-controls_audio > .mic-off')
+    enableToggle(videoOn, videoOff, toggleVideo)
+    enableToggle(audioOn, audioOff, toggleAudio)
+  }
 
   const generateBlankTrack = (width, height) => {
     const img = document.querySelector('.profile-icon')
@@ -446,28 +377,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function enableToggle (onEl, offEl, factory) {
     var fn = factory(onEl, offEl)
+    onEl.classList.remove('disabled')
+    offEl.classList.remove('disabled')
     onEl.addEventListener('click', fn)
     offEl.addEventListener('click', fn)
+  }
+
+  function disableToggle (onEl, offEl, fn) {
+    onEl.classList.add('disabled')
+    offEl.classList.add('disabled')
+    onEl.removeEventListener('click', fn)
+    offEl.removeEventListener('click', fn)
   }
 
   function generatePublisherControls (streamName) {
     const container = document.createElement('div')
     const controls = document.createElement('p')
-    container.classList.add('publisher-controls_container', 'hidden')
+    container.classList.add('publisher-controls_container')
     controls.classList.add('publisher-controls')
     const video = document.createElement('p')
     const videoOn = document.createElement('span')
     const videoOff = document.createElement('span')
     video.classList.add('publisher-controls_video')
-    videoOn.classList.add('fa-solid', 'fa-video')
-    videoOff.classList.add('fa-solid', 'fa-video-slash', 'hidden')
+    videoOn.classList.add('fa-solid', 'fa-video', 'video-on')
+    videoOff.classList.add('fa-solid', 'fa-video-slash', 'video-off', 'hidden')
     videoOff.style.color = 'red'
     const audio = document.createElement('p')
     const audioOn = document.createElement('span')
     const audioOff = document.createElement('span')
     audio.classList.add('publisher-controls_audio')
-    audioOn.classList.add('fa-solid', 'fa-microphone')
-    audioOff.classList.add('fa-solid', 'fa-microphone-slash', 'hidden')
+    audioOn.classList.add('fa-solid', 'fa-microphone', 'mic-on')
+    audioOff.classList.add('fa-solid', 'fa-microphone-slash', 'mic-off', 'hidden')
     audioOff.style.color = 'red'
     video.appendChild(videoOn)
     video.appendChild(videoOff)
@@ -476,8 +416,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     controls.appendChild(video)
     controls.appendChild(audio)
     container.appendChild(controls)
-    enableToggle(videoOn, videoOff, toggleVideo)
-    enableToggle(audioOn, audioOff, toggleAudio)
+    disableToggle(videoOn, videoOff, toggleVideo)
+    disableToggle(audioOn, audioOff, toggleAudio)
     return container
   }
 
@@ -512,8 +452,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
-    //publisherNameField.classList.remove('hidden');
-    //publisherMuteControls.classList.remove('hidden');
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
@@ -521,16 +459,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       el.classList.remove('hidden');
     });
     document.querySelector('.side-viewers').style.backgroundColor = 'black'
-  }
-
-  // eslint-disable-next-line no-unused-vars
-  function updatePublishingUIOnStreamCount (streamCount) {
-    /*if (streamCount > 0) {
-      publisherContainer.classList
-      ('margin-center');
-    } else {
-      publisherContainer.classList.add('margin-center');
-    }*/
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
@@ -642,8 +570,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
       onPublishSuccess(targetPublisher)
       createMainVideo()
-      updateInitialMediaOnPublisher()
-      document.querySelectorAll('.publisher-controls_container').forEach(el => el.classList.remove('hidden'))
     } catch (error) {
       var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
       console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
