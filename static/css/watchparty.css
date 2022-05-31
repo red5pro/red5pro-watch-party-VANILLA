@@ -18,6 +18,16 @@ NONINFRINGEMENT.   IN  NO  EVENT  SHALL INFRARED5, INC. BE LIABLE FOR ANY CLAIM,
 WHETHER IN  AN  ACTION  OF  CONTRACT,  TORT  OR  OTHERWISE,  ARISING  FROM,  OUT  OF  OR  IN CONNECTION 
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+@font-face {
+  font-family: 'Lato';
+  src: url('fonts/Lato-Regular.ttf'), url('https://fonts.googleapis.com/css?family=Lato:400,700');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+
 .red5pro-media-seektime-slider {
   display: none!important;
 }
@@ -75,6 +85,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   margin-left: 10px;
   margin-top: 10px;
   height: 48px;
+}
+
+.login-settings {
+  position: relative;
+}
+
+.settings-toggle-container {
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.settings-toggle {
+  padding: 10px;
+  text-decoration: underline;
+  position: absolute;
+  right: 0px;
+  top: 0;
+  color: #3580A2;
+  cursor: pointer;
 }
 
 .program-container {
@@ -203,6 +233,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .hidden {
   display: none;
 }
+.disabled {
+  opacity: 0.5;
+  cursor: unset;
+}
 .device-label {
   width: 40%;
   text-align: right;
@@ -253,7 +287,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
   */
 
-#red5pro-publisher {
+.flipped-publisher {
   transform: scaleX(-1);
 }
 
@@ -265,13 +299,51 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   position: relative;
 }
 
+.publisher-controls_container,
+.subscriber-controls_container {
+  display: flex;
+  flex-direction: row;
+  padding: 14px;
+  box-sizing: border-box;
+  justify-content: end;
+  align-items: center;
+  color: white;
+  position: absolute;
+  z-index: 10;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  -webkit-user-select: none; /* for Safari */
+  user-select: none;
+}
+
+.publisher-controls {
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  width: 100px;
+  justify-content: end;
+  text-shadow: 0 1px 2px rgb(0 0 0), 0 0 2px rgb(0 0 0);
+}
+
+.publisher-controls_video,
+.publisher-controls_audio {
+  cursor: pointer;
+  text-align: center;
+}
+
+.publisher-controls_video > span,
+.publisher-controls_audio > span {
+  width: 25px;
+  margin-left: 14px;
+}
+
 .name-field {
   color: white;
   text-align: center;
-  padding: 4px;
   width: 100%;
   box-sizing: border-box;
-  background-color: black;
+  padding: 4px;
 }
 
 /*
@@ -280,6 +352,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .video-holder {
   width: 100%;
   height: calc(100% - 24px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #222;
+}
+
+.poster-icon {
+  position: absolute;
+  color: white;
+  text-align: center;
+  font-size: 60px;
 }
 
 .red5pro-publisher {
@@ -288,6 +372,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 .red5pro-subscriber {
   object-fit: contain;
+  z-index: 1;
 }
 
 .red5pro-subscriber-full {
@@ -308,6 +393,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #red5pro-mainVideoView {
   background-color: #000;
+}
+
+.help-footer, .help-header {
+  padding: 10px;
+  background-color: #222;
+  text-align: right;
+  color: white;
+}
+
+.help-footer > p > a,
+.help-header > p > a {
+  color: white;
+  text-decoration: underline;
+}
+
+.main-help-footer, .main-help-header {
+  background-color: black;
+  text-align: left;
+}
+
+.main-help-footer > p > a,
+.main-help-header > p > a {
+  color: gray;
 }
 
 .alert {
@@ -336,6 +444,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @media (orientation: landscape) and (max-height: 500px) {
   #red5pro-publisher {
     max-height: 200px;
+  }
+}
+
+@media (orientation: landscape) {
+  .main-help-header {
+    display: none!important;
   }
 }
 
@@ -370,6 +484,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   .video-card {
     width: calc(100% * 0.5);
     height: unset;
+    min-height: 130px;
   }
   #red5pro-publisher {
     max-height: calc(100vh - 500px);
@@ -377,5 +492,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   .red5pro-media-volume-slider,
   .red5pro-media-seektime-slider {
     display: none!important;
+  }
+  .main-help-footer {
+    display: none;
+  }
+  .main-help-header {
+    display: unset!important;
+    width: 100%;
+    text-align: center;
+    margin: unset;
+    background-color: unset;
+    font-size: 16px;
+    padding-top: 0;
   }
 }

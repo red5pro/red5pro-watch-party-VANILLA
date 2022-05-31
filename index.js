@@ -59,11 +59,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var mediaStream;
   var hostSocket;
   var roomName = window.query('room') || 'red5pro'; // eslint-disable-line no-unused-vars
-  var streamName = window.query('streamName') || ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-');
+  var streamName = window.query('streamName') || '';
   var socketEndpoint = window.query('socket') || 'localhost';
   var hostEndpoint = window.getParameterByName('host');
   configuration.host = hostEndpoint || configuration.host
-  
+
+  var isAdvancedSettings = false;
+  var advancedToggle = document.getElementById('settings-toggle');
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
   var publisherContainer = document.getElementById('publisher-container');
@@ -72,8 +74,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var publisherNameField = document.getElementById('publisher-name-field');
   var streamNameField = document.getElementById('streamname-field');
   var publisherVideo = document.getElementById('red5pro-publisher');
-  var audioCheck = document.getElementById('audio-check');
-  var videoCheck = document.getElementById('video-check');
   var joinButton = document.getElementById('join-button');
   var statisticsField = document.getElementById('statistics-field');
   var bitrateField = document.getElementById('bitrate-field');
@@ -83,6 +83,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var bitrateTrackingTicket;
   var bitrate = 0;
   var packetsSent = 0;
+  var packetsSentComplete = false
   var frameWidth = 0;
   var frameHeight = 0;
 
@@ -132,9 +133,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     bitrate = b;
     packetsSent = p;
     updateStatistics(bitrate, packetsSent, frameWidth, frameHeight);
-    if (packetsSent > 100) {
+    if (packetsSent > 100 && !packetsSentComplete) {
+      packetsSentComplete = true
       clearTimeout(packetsOutTimeout)
-      establishSocketHost(targetPublisher, roomField.value, streamNameField.value);
+      establishSocketHost(targetPublisher, roomName, streamName);
+      enableMuteOptions()
     }
   }
 
@@ -146,8 +149,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   roomField.value = roomName;
   streamNameField.value = streamName;
-  audioCheck.checked = configuration.useAudio;
-  videoCheck.checked = configuration.useVideo;
 
   joinButton.addEventListener('click', function () {
     saveSettings();
@@ -156,91 +157,31 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       document.querySelector('.debug').innerText = streamName;
     }
     doPublish(roomName, streamName);
-    setPublishingUI(streamName);
+    setPublishingUI(streamName)    
   });
 
-  audioCheck.addEventListener('change', updateMutedAudioOnPublisher);
-  videoCheck.addEventListener('change', updateMutedVideoOnPublisher);
 
   var protocol = serverSettings.protocol;
   var isSecure = true; //protocol == 'https';
 
   function saveSettings () {
-    streamName = streamNameField.value;
+    const name = streamNameField.value === '' ? ['publisher', Math.floor(Math.random() * 0x10000).toString(16)].join('-') : streamNameField.value
+    streamName = name
     roomName = roomField.value;
   }
 
-  function updateMutedAudioOnPublisher () {
-    if (targetPublisher && isPublishing) {
-      var c = targetPublisher.getPeerConnection();
-      var senders = c.getSenders();
-      var params = senders[0].getParameters();
-      if (audioCheck.checked) { 
-        if (audioTrackClone) {
-          senders[0].replaceTrack(audioTrackClone);
-          audioTrackClone = undefined;
-        } else {
-          try {
-            targetPublisher.unmuteAudio();
-            params.encodings[0].active = true;
-            senders[0].setParameters(params);
-          } catch (e) {
-            // no browser support, let's use mute API.
-            targetPublisher.unmuteAudio();
-          }
-        }
-      } else { 
-        try {
-          targetPublisher.muteAudio();
-          params.encodings[0].active = false;
-          senders[0].setParameters(params);
-        } catch (e) {
-          // no browser support, let's use mute API.
-          targetPublisher.muteAudio();
-        }
-      }
+  const toggleAdvancedSettings = () => {
+    isAdvancedSettings = !isAdvancedSettings
+    if (isAdvancedSettings) {
+      advancedToggle.innerText = 'Simple Settings'
+      document.querySelectorAll('.advanced-setting').forEach(e => e.classList.remove('hidden'))
+    } else {
+      advancedToggle.innerText = 'Advanced Settings'
+      document.querySelectorAll('.advanced-setting').forEach(e => e.classList.add('hidden'))
     }
   }
 
-  function updateMutedVideoOnPublisher () {
-    if (targetPublisher && isPublishing) {
-      if (videoCheck.checked) {
-        if (videoTrackClone) {
-          var c = targetPublisher.getPeerConnection();
-          var senders = c.getSenders();
-          senders[1].replaceTrack(videoTrackClone);
-          videoTrackClone = undefined;
-        } else {
-          targetPublisher.unmuteVideo();
-        }
-      } else { 
-        targetPublisher.muteVideo(); 
-      }
-    }
-    !videoCheck.checked && showVideoPoster();
-    videoCheck.checked && hideVideoPoster();
-  }
-
-  var audioTrackClone;
-  var videoTrackClone;
-  function updateInitialMediaOnPublisher () {
-    var t = setTimeout(function () {
-      // If we have requested no audio and/or no video in our initial broadcast,
-      // wipe the track from the connection.
-      var audioTrack = targetPublisher.getMediaStream().getAudioTracks()[0];
-      var videoTrack = targetPublisher.getMediaStream().getVideoTracks()[0];
-      var connection = targetPublisher.getPeerConnection();
-      if (!videoCheck.checked) {
-        videoTrackClone = videoTrack.clone();
-        connection.getSenders()[1].replaceTrack(null);
-      }
-      if (!audioCheck.checked) {
-        audioTrackClone = audioTrack.clone();
-        connection.getSenders()[0].replaceTrack(null);
-      }
-      clearTimeout(t);
-    }, 2000); 
-  }
+  advancedToggle.addEventListener('click', toggleAdvancedSettings)
 
   function showVideoPoster () {
     publisherVideo.classList.add('hidden');
@@ -279,7 +220,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     //here remove hidden main video 
     //establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() !== 'RTC') {
-      establishSocketHost(publisher, roomField.value, streamNameField.value);
+      establishSocketHost(publisher, roomName, streamName);
     }
     try {
       var pc = publisher.getPeerConnection();
@@ -325,21 +266,178 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     };
   }
 
+  var videoEnabled = true
+  var audioEnabled = true
+
+  let blankTrack
+  let broadcastTrack
+
+  const enableMuteOptions = () => {
+    const videoOn = document.querySelector('.publisher-controls_video > .video-on')
+    const videoOff = document.querySelector('.publisher-controls_video > .video-off')
+    const audioOn = document.querySelector('.publisher-controls_audio > .mic-on')
+    const audioOff = document.querySelector('.publisher-controls_audio > .mic-off')
+    enableToggle(videoOn, videoOff, toggleVideo)
+    enableToggle(audioOn, audioOff, toggleAudio)
+  }
+
+  const generateBlankTrack = (width, height) => {
+    const img = document.querySelector('.profile-icon')
+    const imgWidth = img.clientWidth
+    const imgHeight = img.clientHeight
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.classList.add('poster-icon')
+    const context = canvas.getContext('2d')
+    const media = canvas.captureStream(25)
+    const track = media.getVideoTracks()[0]
+    const draw = () => {
+      if (!videoEnabled) {
+        requestAnimationFrame(draw)
+      }
+      context.fillStyle = '#111'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      context.drawImage(img, (width - imgWidth) * 0.5, (height - imgHeight) * 0.5, imgWidth, imgHeight)
+    }
+
+    draw()
+    return {canvas, media, track}
+  }
+
+  const sendBlankVideo = pub => {
+    const el = document.querySelector('#red5pro-publisher')
+    const connection = pub.getPeerConnection()
+    const stream = pub.getMediaStream()
+    const senders = connection.getSenders()
+    const sender = senders.find(s => s.track && s.track.kind === 'video')
+    const { canvas, media, track } = generateBlankTrack(el.clientWidth, el.clientHeight)
+    broadcastTrack = sender.track.clone()
+    blankTrack = track
+    broadcastTrack.enabled = false
+    blankTrack.enabled = true
+    sender.replaceTrack(blankTrack)
+    el.srcObject = media
+    el.classList.remove('flipped-publisher')
+  }
+
+  const resumeVideo = pub => {
+    const el = document.querySelector('#red5pro-publisher')
+    const connection = pub.getPeerConnection()
+    const stream = pub.getMediaStream()
+    const senders = connection.getSenders()
+    const sender = senders.find(s => s.track && s.track.kind === 'video')
+    broadcastTrack.enabled = true
+    sender.replaceTrack(broadcastTrack)
+    blankTrack = undefined
+    el.srcObject = pub.getMediaStream()
+    el.classList.add('flipped-publisher')
+  }
+
+  function toggleTrack (publisher, type, active) {
+    if (publisher && publisher.getPeerConnection()) {
+      var connection = publisher.getPeerConnection()
+      var senders = connection.getSenders()
+      var sender = senders.find(s => s.track && s.track.kind === type)
+      var params = sender.getParameters()
+      params.encodings[0].active = active
+      sender.setParameters(params)
+    }
+  }
+
+  function toggleVideo (on, off) {
+    return () => {
+      videoEnabled = !videoEnabled
+      if (videoEnabled) {
+        on.classList.remove('hidden')
+        off.classList.add('hidden')
+        resumeVideo(targetPublisher)
+      } else {
+        on.classList.add('hidden')
+        off.classList.remove('hidden')
+        sendBlankVideo(targetPublisher)
+      }
+    }
+  }
+
+  function toggleAudio (on, off) {
+    return () => {
+      audioEnabled = !audioEnabled
+      if (audioEnabled) {
+        on.classList.remove('hidden')
+        off.classList.add('hidden')
+        targetPublisher.unmuteAudio()
+        toggleTrack(targetPublisher, 'audio', true)
+      } else {
+        on.classList.add('hidden')
+        off.classList.remove('hidden')
+        targetPublisher.muteAudio()
+        toggleTrack(targetPublisher, 'audio', false)
+      }
+    }
+  }
+
+  function enableToggle (onEl, offEl, factory) {
+    var fn = factory(onEl, offEl)
+    onEl.classList.remove('disabled')
+    offEl.classList.remove('disabled')
+    onEl.addEventListener('click', fn)
+    offEl.addEventListener('click', fn)
+  }
+
+  function disableToggle (onEl, offEl, fn) {
+    onEl.classList.add('disabled')
+    offEl.classList.add('disabled')
+    onEl.removeEventListener('click', fn)
+    offEl.removeEventListener('click', fn)
+  }
+
+  function generatePublisherControls (streamName) {
+    const container = document.createElement('div')
+    const controls = document.createElement('p')
+    container.classList.add('publisher-controls_container')
+    controls.classList.add('publisher-controls')
+    const video = document.createElement('p')
+    const videoOn = document.createElement('span')
+    const videoOff = document.createElement('span')
+    video.classList.add('publisher-controls_video')
+    videoOn.classList.add('fa-solid', 'fa-video', 'video-on')
+    videoOff.classList.add('fa-solid', 'fa-video-slash', 'video-off', 'hidden')
+    videoOff.style.color = 'red'
+    const audio = document.createElement('p')
+    const audioOn = document.createElement('span')
+    const audioOff = document.createElement('span')
+    audio.classList.add('publisher-controls_audio')
+    audioOn.classList.add('fa-solid', 'fa-microphone', 'mic-on')
+    audioOff.classList.add('fa-solid', 'fa-microphone-slash', 'mic-off', 'hidden')
+    audioOff.style.color = 'red'
+    video.appendChild(videoOn)
+    video.appendChild(videoOff)
+    audio.appendChild(audioOn)
+    audio.appendChild(audioOff)
+    controls.appendChild(video)
+    controls.appendChild(audio)
+    container.appendChild(controls)
+    disableToggle(videoOn, videoOff, toggleVideo)
+    disableToggle(audioOn, audioOff, toggleAudio)
+    return container
+  }
+
   function setPublishingUI (streamName) {
     const tray = document.querySelector('.side-viewers')
     const pubView = document.querySelector('#red5pro-publisher')
     pubView.parentNode.removeChild(pubView)
     const div = document.createElement('div')
-    const nameField = document.createElement('div')
-    const videoHolder = document.createElement('div')
     const p = document.createElement('p')
     const t = document.createTextNode(streamName)
+    const videoHolder = document.createElement('div')
+    const controls = generatePublisherControls(streamName)
+    p.classList.add('name-field')
     div.classList.add('video-card')
     videoHolder.classList.add('video-holder')
-    p.classList.add('name-field')
     p.appendChild(t)
-    nameField.appendChild(p)
-    div.appendChild(nameField)
+    div.appendChild(p)
+    div.appendChild(controls)
     div.appendChild(videoHolder)
     videoHolder.appendChild(pubView)
     tray.appendChild(div)
@@ -356,8 +454,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     publisherNameField.innerText = streamName;
     roomField.setAttribute('disabled', true);
     publisherSession.classList.remove('hidden');
-    //publisherNameField.classList.remove('hidden');
-    //publisherMuteControls.classList.remove('hidden');
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
       el.classList.add('hidden');
     });
@@ -365,16 +461,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       el.classList.remove('hidden');
     });
     document.querySelector('.side-viewers').style.backgroundColor = 'black'
-  }
-
-  // eslint-disable-next-line no-unused-vars
-  function updatePublishingUIOnStreamCount (streamCount) {
-    /*if (streamCount > 0) {
-      publisherContainer.classList
-      ('margin-center');
-    } else {
-      publisherContainer.classList.add('margin-center');
-    }*/
+    document.querySelector('.main-help-header').style.cssText = ''
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
@@ -405,14 +492,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     try {
 
       let config = {
-        protocol: 'wss',
-        port: 443,
+        protocol: isSecure ? 'wss' : 'ws',
+        port: isSecure ? 443 : 5080,
         host: 'your-host-here',
         app: 'live',
         streamName: 'demo-stream',
         mediaElementId: 'red5pro-mainVideoView',
         subscriptionId: 'demo-stream' + Math.floor(Math.random() * 0x10000).toString(16)
       }
+      mainProgram.volume = 0.25
       var mainVideo = new red5prosdk.RTCSubscriber();
       mainVideo.on('*', event => {
         if (event.type === 'Subscribe.Time.Update') return
@@ -485,7 +573,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
       onPublishSuccess(targetPublisher)
       createMainVideo()
-      updateInitialMediaOnPublisher()
     } catch (error) {
       var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
       console.error('[Red5ProPublisher] :: Error in publishing - ' + jsonError);
@@ -649,6 +736,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       })
     }
   }
+
+  document.querySelector('.main-help-header').style.cssText = 'display:none!important'
 
 })(this, document, window.red5prosdk);
 
