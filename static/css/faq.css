@@ -55,6 +55,10 @@ li {
   margin-top: 20px;
 }
 
+.browser {
+  text-decoration: underline;
+}
+
 @media (orientation: portrait)  {
   .faq-section > .article {
     margin: 0 40px;

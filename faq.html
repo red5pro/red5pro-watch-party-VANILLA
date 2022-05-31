@@ -58,7 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
           </details>
           <details class="article_detail">
             <summary class="article_summary">Browser</summary>
-            <p>Your current browser is <span class="browser">Unknown</span></p>
+            <p>You are currently using <span class="browser">Unknown</span> as your browser.</p>
             <p>If you are experiencing issues with streaming, try the following:
               <ul>
                 <li>If connecting using an iOS device, it is recommended to use Safari.</li>
@@ -73,6 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
         let browser = 'Unknown'
         if (adapter) {
           browser = adapter.browserDetails.browser
+          browser = browser.charAt(0).toUpperCase() + browser.slice(1)
         }
         document.querySelectorAll('.browser').forEach(el => el.innerText = browser)
       })(window, window.adapter)
