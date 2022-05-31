@@ -83,6 +83,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   var bitrateTrackingTicket;
   var bitrate = 0;
   var packetsSent = 0;
+  var packetsSentComplete = false
   var frameWidth = 0;
   var frameHeight = 0;
 
@@ -132,7 +133,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     bitrate = b;
     packetsSent = p;
     updateStatistics(bitrate, packetsSent, frameWidth, frameHeight);
-    if (packetsSent > 100) {
+    if (packetsSent > 100 && !packetsSentComplete) {
+      packetsSentComplete = true
       clearTimeout(packetsOutTimeout)
       establishSocketHost(targetPublisher, roomName, streamName);
       enableMuteOptions()
@@ -465,7 +467,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
-    // var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
+    //    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
     var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
