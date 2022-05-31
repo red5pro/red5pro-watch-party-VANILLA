@@ -459,12 +459,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       el.classList.remove('hidden');
     });
     document.querySelector('.side-viewers').style.backgroundColor = 'black'
+    document.querySelector('.main-help-header').style.cssText = ''
   }
 
   function establishSocketHost (publisher, roomName, streamName) {
     if (hostSocket) return
     var wsProtocol = isSecure ? 'wss' : 'ws'
-    //    var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
+    // var url = `${wsProtocol}://${socketEndpoint}:8001?room=${roomName}&streamName=${streamName}`
     // hacked to support remote server while doing local development
     var url = `wss://your-host-here:8443?room=${roomName}&streamName=${streamName}`
     hostSocket = new WebSocket(url)
@@ -733,6 +734,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       })
     }
   }
+
+  document.querySelector('.main-help-header').style.cssText = 'display:none!important'
 
 })(this, document, window.red5prosdk);
 

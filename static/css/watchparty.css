@@ -231,7 +231,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   border-top: 1px solid #3b3b3b;
 }
 .hidden {
-  display: none!important;
+  display: none;
 }
 .disabled {
   opacity: 0.5;
@@ -395,6 +395,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   background-color: #000;
 }
 
+.help-footer, .help-header {
+  padding: 10px;
+  background-color: #222;
+  text-align: right;
+  color: white;
+}
+
+.help-footer > p > a,
+.help-header > p > a {
+  color: white;
+  text-decoration: underline;
+}
+
+.main-help-footer, .main-help-header {
+  background-color: black;
+  text-align: left;
+}
+
+.main-help-footer > p > a,
+.main-help-header > p > a {
+  color: gray;
+}
+
 .alert {
   position: absolute;
   z-index: 10001;
@@ -421,6 +444,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @media (orientation: landscape) and (max-height: 500px) {
   #red5pro-publisher {
     max-height: 200px;
+  }
+}
+
+@media (orientation: landscape) {
+  .main-help-header {
+    display: none!important;
   }
 }
 
@@ -463,5 +492,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   .red5pro-media-volume-slider,
   .red5pro-media-seektime-slider {
     display: none!important;
+  }
+  .main-help-footer {
+    display: none;
+  }
+  .main-help-header {
+    display: unset!important;
+    width: 100%;
+    text-align: center;
+    margin: unset;
+    background-color: unset;
+    font-size: 16px;
+    padding-top: 0;
   }
 }
